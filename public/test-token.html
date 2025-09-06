@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test Token Storage</title>
+</head>
+
+<body>
+    <h1>Token Storage Test</h1>
+    <div id="output"></div>
+
+    <script>
+        function testTokenStorage() {
+            const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUyNTE5MzgzLCJpYXQiOjE3NTI1MTU3ODMsImp0aSI6IjlmYWRhYjhhZDA0YTRkZmRiNTFlMWFmMTNkOTE4ZjQyIiwidXNlcl9pZCI6Nn0.Q3S-0x46ZdEAqWMFTRqyvV2eXY7zc9jB1XrnKnsRf_g';
+
+            // Store token in localStorage
+            localStorage.setItem('authToken', token);
+
+            // Also store some mock user data
+            const userData = {
+                id: '68839803673277b692a20d76',
+                name: 'User 6',
+                email: 'user_6@temp.com',
+                role: 'user'
+            };
+            localStorage.setItem('userData', JSON.stringify(userData));
+
+            // Test retrieval
+            const storedToken = localStorage.getItem('authToken');
+            const storedUserData = localStorage.getItem('userData');
+
+            const output = document.getElementById('output');
+            output.innerHTML = `
+                <h2>Storage Test Results:</h2>
+                <p><strong>Token stored:</strong> ${storedToken ? 'Yes' : 'No'}</p>
+                <p><strong>Token length:</strong> ${storedToken ? storedToken.length : 0}</p>
+                <p><strong>User data stored:</strong> ${storedUserData ? 'Yes' : 'No'}</p>
+                <p><strong>User data:</strong> ${storedUserData || 'None'}</p>
+                <br>
+                <button onclick="redirectToAccount()">Go to Account Page</button>
+            `;
+        }
+
+        function redirectToAccount() {
+            window.location.href = '/account';
+        }
+
+        // Run test on page load
+        testTokenStorage();
+    </script>
+</body>
+
+</html>

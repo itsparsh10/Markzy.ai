@@ -1,0 +1,432 @@
+/* Main styles for Markzy */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Define animation keyframes at root level */
+@keyframes sparkle {
+    0% { filter: brightness(1); }
+    50% { filter: brightness(1.5) drop-shadow(0 0 5px rgba(70, 173, 182, 0.7)); }
+    100% { filter: brightness(1); }
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Base styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    max-height: 100vh;
+    overflow: hidden;
+}
+
+/* Responsive textarea sizes */
+@media (min-height: 900px) {
+    textarea {
+        height: 7rem !important;
+    }
+}
+
+@media (min-height: 800px) and (max-height: 899px) {
+    textarea {
+        height: 6rem !important;
+    }
+}
+
+@media (min-height: 700px) and (max-height: 799px) {
+    textarea {
+        height: 5rem !important;
+    }
+}
+
+@media (max-height: 699px) {
+    textarea {
+        height: 4rem !important;
+    }
+    .sidebar-nav-item span {
+        font-size: 0.85rem;
+    }
+}
+
+/* Single viewport layout support */
+@media (max-height: 800px) {
+    textarea {
+        height: 3rem;
+    }
+    
+    /* Reduce animation intensity for smaller viewports */
+    .float-animation {
+        animation: floatAnimation 2s ease-in-out infinite;
+        /* Reduce the floating distance by changing the keyframes impact */
+        transform-origin: center;
+    }
+}
+
+@media (max-height: 700px) {
+    textarea {
+        height: 2.5rem;
+    }
+    
+    /* Disable certain animations on very small screens to save space */
+    .scale-on-hover:hover {
+        transform: none;
+    }
+    
+    .float-animation {
+        animation: none;
+    }
+    
+    /* Make typing animation faster on small screens */
+    .typing-animation {
+        animation-duration: 1.5s;
+    }
+}
+
+/* Gradients */
+.magic-gradient {
+    background: linear-gradient(to right, #46adb6, #1d1f89);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.logo-bg {
+    background: linear-gradient(135deg, rgba(29, 31, 137, 0.5) 0%, rgba(70, 173, 182, 0.3) 100%);
+    border: 1px solid rgba(70, 173, 182, 0.3);
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.2), 0 2px 5px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.logo-bg::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    background: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2346adb6' fill-opacity='0.1' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1.5'/%3E%3Ccircle cx='13' cy='13' r='1.5'/%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.5;
+    z-index: -1;
+}
+
+.premium-gold {
+    background: linear-gradient(135deg, rgba(38, 40, 155, 0.8) 0%, rgba(59, 143, 150, 0.7) 100%);
+    border: 1px solid rgba(176, 206, 209, 0.4);
+    box-shadow: 0 2px 5px rgba(29, 31, 137, 0.2);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.premium-gold::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(208, 188, 156, 0.3), transparent);
+}
+
+.premium-gold::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(208, 188, 156, 0.2), transparent);
+}
+
+.premium-gold:hover {
+    background: linear-gradient(135deg, rgba(46, 48, 160, 0.85) 0%, rgba(70, 173, 182, 0.75) 100%);
+    box-shadow: 0 3px 7px rgba(29, 31, 137, 0.25), 0 0 10px rgba(208, 188, 156, 0.1);
+    transform: translateY(-1px);
+}
+
+.magic-hover:hover {
+    animation: sparkle 1s infinite;
+}
+
+.active-click {
+    transform: scale(0.95);
+    transition: transform 0.2s;
+}
+
+/* Text Effects */
+.text-shadow-sm {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6), 0 0 5px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.5px;
+}
+
+/* Animations */
+.nav-item {
+    transition: all 0.2s ease;
+}
+.nav-item:hover {
+    transform: translateX(4px);
+}
+
+.button-hover {
+    transition: all 0.3s ease;
+}
+.button-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(70, 173, 182, 0.3);
+}
+
+.scale-on-hover {
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 8px rgba(29, 31, 137, 0.15);
+}
+
+.scale-on-hover:hover {
+    transform: scale(1.03);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes floatAnimation {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+    100% { transform: translateY(0px); }
+}
+
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 0 0 rgba(70, 173, 182, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(70, 173, 182, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(70, 173, 182, 0); }
+}
+
+@keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes typing {
+    from { width: 0 }
+    to { width: 100% }
+}
+
+@keyframes blink {
+    50% { border-color: transparent }
+}
+
+.fade-in {
+    animation: fadeIn 0.8s ease-in-out;
+}
+
+.float-animation {
+    animation: floatAnimation 4s ease-in-out infinite;
+}
+
+.pulse-animation {
+    animation: pulseGlow 2s infinite;
+}
+
+.gradient-animation {
+    background: linear-gradient(270deg, #46adb6, #1d1f89);
+    background-size: 200% 200%;
+    animation: gradientFlow 8s ease infinite;
+}
+
+.typing-animation {
+    overflow: hidden;
+    white-space: nowrap;
+    width: 0;
+    animation: typing 2.5s steps(30, end) forwards;
+}
+
+.fade-in-delay-1 {
+    animation-delay: 0.1s;
+    opacity: 0;
+    animation: fadeIn 0.5s ease-out 0.1s forwards;
+}
+
+.fade-in-delay-2 {
+    animation-delay: 0.2s;
+    opacity: 0;
+    animation: fadeIn 0.5s ease-out 0.2s forwards;
+}
+
+.fade-in-delay-3 {
+    animation-delay: 0.3s;
+    opacity: 0;
+    animation: fadeIn 0.5s ease-out 0.3s forwards;
+}
+
+/* Form elements */
+textarea:focus {
+    outline: 2px solid #46adb6;
+    border-color: transparent;
+    box-shadow: 0 0 0 3px rgba(70, 173, 182, 0.2);
+}
+
+/* Single viewport layout support */
+.max-h-\[50vh\] {
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+/* Compact form elements */
+textarea {
+    resize: none; /* Prevents user resizing which could break layout */
+    transition: height 0.2s ease;
+}
+
+/* Ensure cards fit nicely */
+.card-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 60px); /* Adjust based on header height */
+}
+
+/* Force compact layout */
+.max-h-fit {
+    max-height: fit-content !important;
+}
+
+/* Button styling */
+.button-hover {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.button-hover:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f0f0f0;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #46adb6;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #1d1f89;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .dark-mode-toggle {
+        display: flex !important;
+    }
+}
+
+/* Additional responsive adjustments */
+@media (max-width: 768px) {
+    .mobile-menu-active {
+        transform: translateX(0);
+    }
+    
+    .sidebar-overlay {
+        display: block;
+    }
+    
+    /* Make content more compact on mobile */
+    .max-h-\[50vh\] {
+        max-height: 40vh; /* Smaller on mobile */
+    }
+    
+    textarea {
+        height: 60px !important; /* Even smaller textareas on mobile */
+    }
+    
+    /* Adjust padding/margins for mobile */
+    .mb-3 {
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .p-4 {
+        padding: 0.75rem !important;
+    }
+}
+
+/* Highlight effect for upgrade section */
+@keyframes highlight-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(70, 173, 182, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(70, 173, 182, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(70, 173, 182, 0); }
+}
+
+.highlight-section {
+    animation: highlight-pulse 1.5s ease-in-out;
+    border-color: #46adb6 !important;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Styles for upgrade section */
+#upgrade-content {
+    background-color: #f8fafc;
+}
+#upgrade-content .grid > div {
+    padding: 0.75rem !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+}
+#upgrade-content .grid > div:hover {
+    transform: translateY(-2px);
+    transition: transform 0.3s ease;
+}
+#upgrade-content .grid > div ul {
+    margin-bottom: 0.75rem !important;
+    color: #4b5563;
+}
+#upgrade-content .grid > div ul li {
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: start;
+    font-size: 0.875rem;
+}
+#upgrade-content .grid > div ul li i {
+    color: #46adb6;
+    margin-right: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+/* Pricing cards styling */
+.pricing-card {
+    transition: all 0.3s ease;
+}
+.pricing-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
