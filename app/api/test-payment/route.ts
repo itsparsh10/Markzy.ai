@@ -32,15 +32,14 @@ export async function POST(req: NextRequest) {
     }
     
     if (!user) {
-      // Create a test user
-      user = new User({
+      user = await User.create({
         email: userEmail || 'test@example.com',
         name: 'Test User',
         password: 'test_password',
         role: 'user',
-        isActive: true
+        isActive: true,
       });
-      await user.save();
+      if (!user) throw new Error('Failed to create test user');
       console.log('Created test user:', user._id);
     }
 
@@ -71,8 +70,11 @@ export async function POST(req: NextRequest) {
       console.log('Updated existing subscription:', subscription._id);
     } else {
       subscription = await Subscription.create(subscriptionData);
+      if (!subscription) throw new Error('Failed to create subscription');
       console.log('Created new subscription:', subscription._id);
     }
+
+    if (!subscription) throw new Error('Missing subscription');
 
     // Update user subscription reference
     await User.findByIdAndUpdate(user._id, {

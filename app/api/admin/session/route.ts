@@ -39,15 +39,6 @@ export async function POST(request: NextRequest) {
         {
           logoutAt: new Date(),
           isActive: false,
-          duration: {
-            $function: {
-              body: function(loginAt: any, logoutAt: any) {
-                return Math.floor((logoutAt - loginAt) / 1000); // Duration in seconds
-              },
-              args: ['$loginAt', '$$NOW'],
-              lang: 'js'
-            }
-          }
         },
         { new: true }
       );
@@ -113,9 +104,10 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    const sessions = await SessionLog.find({ userId })
-      .sort({ loginAt: -1 })
-      .limit(50);
+    const sessions = await SessionLog.find(
+      { userId },
+      { sort: { loginAt: -1 }, limit: 50 }
+    );
     
     return NextResponse.json({
       success: true,

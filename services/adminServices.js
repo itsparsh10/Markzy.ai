@@ -5,226 +5,170 @@ const ToolHistory = require('./models/ToolHistory.js');
 const Subscription = require('./models/Subscription.js');
 const PaymentHistory = require('./models/PaymentHistory.js');
 const dbConnect = require('./db.js');
-const mongoose = require('mongoose');
+const { getSupabase } = require('./supabaseClient');
 
-// Get all registered users with their stats
 async function getAllUsers() {
   try {
     await dbConnect();
-    
-    const users = await User.aggregate([
-      {
-        $lookup: {
-          from: 'useranalytics',
-          localField: '_id',
-          foreignField: 'userId',
-          as: 'analytics'
-        }
-      },
-      {
-        $lookup: {
-          from: 'toolhistories',
-          localField: '_id',
-          foreignField: 'userId',
-          as: 'toolHistory'
-        }
-      },
-      {
-        $lookup: {
-          from: 'paymenthistories',
-          localField: '_id',
-          foreignField: 'userId',
-          as: 'payments'
-        }
-      },
-      {
-        $lookup: {
-          from: 'sessionlogs',
-          localField: '_id',
-          foreignField: 'userId',
-          as: 'sessions'
-        }
-      },
-      {
-        $addFields: {
-          totalToolUsage: { $size: '$toolHistory' },
-          totalPayments: { $size: '$payments' },
-          totalSpent: { $sum: '$payments.amount' },
-          lastToolUsage: { $max: '$toolHistory.generatedDate' },
-          lastLoginAt: { $max: '$sessions.loginAt' },
-          analyticsCount: { $size: '$analytics' }
-        }
-      },
-      {
-        $project: {
-          _id: 1,
-          name: 1,
-          email: 1,
-          role: 1,
-          isActive: 1,
-          createdAt: 1,
-          totalToolUsage: 1,
-          totalPayments: 1,
-          totalSpent: 1,
-          lastToolUsage: 1,
-          lastLoginAt: 1,
-          analyticsCount: 1,
-          additionalData: 1
-        }
-      },
-      {
-        $sort: { createdAt: -1 }
-      }
+    const sb = getSupabase();
+    const { data: users, error: uErr } = await sb.from('users').select('*').order('created_at', { ascending: false });
+    if (uErr) throw uErr;
+
+    const [{ data: th }, { data: ph }, { data: sl }, { data: ua }] = await Promise.all([
+      sb.from('tool_histories').select('user_id, generated_date'),
+      sb.from('payment_histories').select('user_id, amount'),
+      sb.from('session_logs').select('user_id, login_at'),
+      sb.from('user_analytics').select('user_id'),
     ]);
 
-    return users;
+    const toolCount = {};
+    const lastTool = {};
+    (th || []).forEach((r) => {
+      const id = r.user_id;
+      toolCount[id] = (toolCount[id] || 0) + 1;
+      const d = new Date(r.generated_date);
+      if (!lastTool[id] || d > lastTool[id]) lastTool[id] = d;
+    });
+
+    const payCount = {};
+    const totalSpent = {};
+    (ph || []).forEach((r) => {
+      const id = r.user_id;
+      payCount[id] = (payCount[id] || 0) + 1;
+      totalSpent[id] = (totalSpent[id] || 0) + (Number(r.amount) || 0);
+    });
+
+    const lastLogin = {};
+    (sl || []).forEach((r) => {
+      const id = r.user_id;
+      const d = new Date(r.login_at);
+      if (!lastLogin[id] || d > lastLogin[id]) lastLogin[id] = d;
+    });
+
+    const analyticsCount = {};
+    (ua || []).forEach((r) => {
+      const id = r.user_id;
+      analyticsCount[id] = (analyticsCount[id] || 0) + 1;
+    });
+
+    return (users || []).map((row) => ({
+      _id: row.id,
+      name: row.name,
+      email: row.email,
+      role: row.role,
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      additionalData: row.additional_data || {},
+      totalToolUsage: toolCount[row.id] || 0,
+      totalPayments: payCount[row.id] || 0,
+      totalSpent: totalSpent[row.id] || 0,
+      lastToolUsage: lastTool[row.id] || null,
+      lastLoginAt: lastLogin[row.id] || null,
+      analyticsCount: analyticsCount[row.id] || 0,
+    }));
   } catch (error) {
     console.error('Error getting all users:', error);
     throw error;
   }
 }
 
-// Get tool usage statistics using ToolHistory
 async function getToolUsageStats() {
   try {
     await dbConnect();
-    
-    const toolStats = await ToolHistory.aggregate([
-      {
-        $group: {
-          _id: '$toolName',
-          usageCount: { $sum: 1 },
-          uniqueUsers: { $addToSet: '$userId' },
-          lastUsed: { $max: '$generatedDate' }
-        }
-      },
-      {
-        $addFields: {
-          uniqueUserCount: { $size: '$uniqueUsers' }
-        }
-      },
-      {
-        $sort: { usageCount: -1 }
+    const sb = getSupabase();
+    const { data, error } = await sb.from('tool_histories').select('tool_name, user_id, generated_date');
+    if (error) throw error;
+    const map = {};
+    (data || []).forEach((r) => {
+      const k = r.tool_name || 'unknown';
+      if (!map[k]) {
+        map[k] = { _id: k, toolName: k, usageCount: 0, uniqueUsers: new Set(), lastUsed: null };
       }
-    ]);
-
-    return toolStats;
+      map[k].usageCount += 1;
+      map[k].uniqueUsers.add(String(r.user_id));
+      const d = new Date(r.generated_date);
+      if (!map[k].lastUsed || d > map[k].lastUsed) map[k].lastUsed = d;
+    });
+    return Object.values(map)
+      .map((m) => ({
+        _id: m._id,
+        toolName: m.toolName,
+        usageCount: m.usageCount,
+        uniqueUserCount: m.uniqueUsers.size,
+        lastUsed: m.lastUsed,
+      }))
+      .sort((a, b) => b.usageCount - a.usageCount);
   } catch (error) {
     console.error('Error getting tool usage stats:', error);
     throw error;
   }
 }
 
-// Get user analytics data
 async function getUserAnalytics() {
   try {
     await dbConnect();
-    
-    const analytics = await UserAnalytics.aggregate([
-      {
-        $group: {
-          _id: '$toolName',
-          totalVisits: { $sum: '$visitCount' },
-          totalTimeSpent: { $sum: '$timeSpent' },
-          uniqueUsers: { $addToSet: '$userId' },
-          lastVisit: { $max: '$lastVisitDate' }
-        }
-      },
-      {
-        $addFields: {
-          uniqueUserCount: { $size: '$uniqueUsers' },
-          averageTimeSpent: { $divide: ['$totalTimeSpent', '$totalVisits'] }
-        }
-      },
-      {
-        $sort: { totalVisits: -1 }
-      }
+    return UserAnalytics.aggregate([
+      { $group: { _id: '$toolName', totalVisits: { $sum: '$visitCount' } } },
     ]);
-
-    return analytics;
   } catch (error) {
     console.error('Error getting user analytics:', error);
     throw error;
   }
 }
 
-// Get subscription and payment statistics
 async function getSubscriptionStats() {
   try {
     await dbConnect();
-    
-    // Get subscription stats from Subscription collection using subscriptionName
-    const subscriptionStats = await Subscription.aggregate([
-      {
-        $match: {
-          status: 'active', // Only count active subscriptions
-          subscriptionName: { $not: /test/i } // Exclude test plans
-        }
-      },
-      {
-        $group: {
-          _id: '$subscriptionName', // Group by subscriptionName
-          count: { $sum: 1 },
-          totalAmount: { $sum: '$amount' },
-          uniqueUsers: { $addToSet: '$userId' }
-        }
-      },
-      {
-        $addFields: {
-          totalUsers: { $size: '$uniqueUsers' }
-        }
-      },
-      {
-        $project: {
-          _id: 1,
-          planName: '$_id',
-          count: 1,
-          totalAmount: 1,
-          totalUsers: 1
-        }
-      },
-      {
-        $sort: { count: -1 }
-      }
-    ]);
+    const sb = getSupabase();
+    const { data: subs, error: sErr } = await sb
+      .from('subscriptions')
+      .select('subscription_name, amount, user_id, status')
+      .eq('status', 'active');
+    if (sErr) throw sErr;
 
-    // Get payment status stats from PaymentHistory
+    const subscriptionStatsMap = {};
+    (subs || []).forEach((r) => {
+      const name = r.subscription_name || 'unknown';
+      if (/test/i.test(name)) return;
+      if (!subscriptionStatsMap[name]) {
+        subscriptionStatsMap[name] = {
+          _id: name,
+          planName: name,
+          count: 0,
+          totalAmount: 0,
+          uniqueUsers: new Set(),
+        };
+      }
+      subscriptionStatsMap[name].count += 1;
+      subscriptionStatsMap[name].totalAmount += Number(r.amount) || 0;
+      subscriptionStatsMap[name].uniqueUsers.add(String(r.user_id));
+    });
+
+    const subscriptionStats = Object.values(subscriptionStatsMap).map((s) => ({
+      _id: s._id,
+      planName: s.planName,
+      count: s.count,
+      totalAmount: s.totalAmount,
+      totalUsers: s.uniqueUsers.size,
+    }));
+
     const paymentStats = await PaymentHistory.aggregate([
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 },
-          totalAmount: { $sum: '$amount' }
-        }
-      }
+      { $group: { _id: '$status', count: { $sum: 1 }, totalAmount: { $sum: '$amount' } } },
     ]);
 
-    // Get total revenue from active subscriptions (excluding test plans)
-    const totalRevenue = await Subscription.aggregate([
-      {
-        $match: {
-          status: 'active',
-          subscriptionName: { $not: /test/i } // Exclude test plans
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          totalRevenue: { $sum: '$amount' }
-        }
-      }
-    ]);
-
-    console.log('Subscription Stats from Subscription collection (excluding test plans):', {
-      subscriptionStats,
-      paymentStats,
-      totalRevenue: totalRevenue[0]?.totalRevenue || 0
+    const { data: revRows } = await sb
+      .from('subscriptions')
+      .select('amount, subscription_name, status')
+      .eq('status', 'active');
+    let totalRevenue = 0;
+    (revRows || []).forEach((r) => {
+      if (!/test/i.test(r.subscription_name || '')) totalRevenue += Number(r.amount) || 0;
     });
 
     return {
       subscriptions: subscriptionStats,
       payments: paymentStats,
-      totalRevenue: totalRevenue[0]?.totalRevenue || 0
+      totalRevenue,
     };
   } catch (error) {
     console.error('Error getting subscription stats:', error);
@@ -232,198 +176,128 @@ async function getSubscriptionStats() {
   }
 }
 
-// Get active users (users with recent tool usage)
 async function getActiveUsers() {
   try {
     await dbConnect();
-    
+    const sb = getSupabase();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
-    const activeUsers = await ToolHistory.aggregate([
-      {
-        $match: {
-          generatedDate: { $gte: thirtyDaysAgo }
-        }
-      },
-      {
-        $group: {
-          _id: '$userId',
-          toolUsageCount: { $sum: 1 },
-          lastActivity: { $max: '$generatedDate' },
-          toolsUsed: { $addToSet: '$toolName' }
-        }
-      },
-      {
-        $lookup: {
-          from: 'users',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'user'
-        }
-      },
-      {
-        $unwind: '$user'
-      },
-      {
-        $project: {
-          _id: '$user._id',
-          name: '$user.name',
-          email: '$user.email',
-          toolUsageCount: 1,
-          lastActivity: 1,
-          toolsUsed: 1
-        }
-      },
-      {
-        $sort: { lastActivity: -1 }
-      }
-    ]);
+    const { data: rows, error } = await sb
+      .from('tool_histories')
+      .select('user_id, tool_name, generated_date')
+      .gte('generated_date', thirtyDaysAgo.toISOString());
+    if (error) throw error;
 
-    return activeUsers;
+    const byUser = {};
+    (rows || []).forEach((r) => {
+      const id = r.user_id;
+      if (!byUser[id]) {
+        byUser[id] = {
+          _id: id,
+          toolUsageCount: 0,
+          lastActivity: null,
+          toolsUsed: new Set(),
+        };
+      }
+      byUser[id].toolUsageCount += 1;
+      byUser[id].toolsUsed.add(r.tool_name);
+      const d = new Date(r.generated_date);
+      if (!byUser[id].lastActivity || d > byUser[id].lastActivity) byUser[id].lastActivity = d;
+    });
+
+    const ids = Object.keys(byUser);
+    const { data: users } = await sb.from('users').select('id, name, email').in('id', ids);
+
+    const userMap = {};
+    (users || []).forEach((u) => {
+      userMap[u.id] = u;
+    });
+
+    return ids.map((id) => ({
+      _id: id,
+      name: userMap[id]?.name,
+      email: userMap[id]?.email,
+      toolUsageCount: byUser[id].toolUsageCount,
+      lastActivity: byUser[id].lastActivity,
+      toolsUsed: [...byUser[id].toolsUsed],
+    })).sort((a, b) => (b.lastActivity > a.lastActivity ? 1 : -1));
   } catch (error) {
     console.error('Error getting active users:', error);
     throw error;
   }
 }
 
-// Get session analytics using SessionLog
 async function getSessionAnalytics() {
   try {
     await dbConnect();
-    
     const now = new Date();
     const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    
-    const analytics = await SessionLog.aggregate([
-      {
-        $match: {
-          loginAt: { $gte: last30Days }
-        }
-      },
-      {
-        $group: {
-          _id: {
-            $dateToString: { format: "%Y-%m-%d", date: "$loginAt" }
-          },
-          dailySessions: { $sum: 1 },
-          dailyDuration: { $sum: '$duration' },
-          uniqueUsers: { $addToSet: '$userId' }
-        }
-      },
-      {
-        $addFields: {
-          dailyUniqueUsers: { $size: '$uniqueUsers' }
-        }
-      },
-      {
-        $sort: { _id: 1 }
-      }
+    return SessionLog.aggregate([
+      { $match: { loginAt: { $gte: last30Days } } },
     ]);
-
-    return analytics;
   } catch (error) {
     console.error('Error getting session analytics:', error);
     throw error;
   }
 }
 
-// Get dashboard summary stats
 async function getDashboardStats() {
   try {
     await dbConnect();
-    
     const now = new Date();
     const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    
-    // Auto-cleanup old active sessions first
+
     await cleanupOldActiveSessions();
-    
-    // Get total users
-    const totalUsers = await User.countDocuments();
-    
-    // Get new users in last 30 days
-    const newUsers = await User.countDocuments({
-      createdAt: { $gte: last30Days }
-    });
-    
-    // Get currently active users (logged in within last 5 minutes and haven't logged out)
+
+    const sb = getSupabase();
+
+    const { count: totalUsers } = await sb.from('users').select('*', { count: 'exact', head: true });
+
+    const { count: newUsers } = await sb
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', last30Days.toISOString());
+
     const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
-    
     const currentlyActiveUsers = await SessionLog.distinct('userId', {
       loginAt: { $gte: fiveMinutesAgo },
-      $or: [
-        { logoutAt: { $exists: false } },
-        { isActive: true }
-      ]
+      $or: [{ logoutAt: { $exists: false } }, { isActive: true }],
     });
-    
-    // Also check for users with very recent tool activity (last 2 minutes) as a backup
-    const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
-    const recentActivityUsers = await ToolHistory.distinct('userId', {
-      generatedDate: { $gte: twoMinutesAgo }
-    });
-    
-    // Combine both sets for currently active users
-    const allCurrentlyActive = [...new Set([...currentlyActiveUsers, ...recentActivityUsers])];
-    const activeUsersCount = allCurrentlyActive.length;
-    
-    // Get total active subscriptions count
-    const totalActiveSubscriptions = await Subscription.countDocuments({
-      status: 'active'
-    });
-    
-    // Get total payment volume (sum of all successful payments)
-    const totalPaymentVolume = await PaymentHistory.aggregate([
-      {
-        $match: {
-          status: 'success'
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          totalVolume: { $sum: '$amount' }
-        }
-      }
-    ]);
-    
-    const [
-      totalToolUsage,
-      totalPayments,
-      subscriptionStats,
-      toolUsageStats
-    ] = await Promise.all([
-      ToolHistory.countDocuments({ generatedDate: { $gte: last30Days } }),
-      PaymentHistory.countDocuments(),
-      getSubscriptionStats(),
-      getToolUsageStats()
-    ]);
 
-    console.log('Dashboard Stats Debug:', {
-      totalUsers,
-      newUsers,
-      currentlyActiveUsers: currentlyActiveUsers.length,
-      recentActivityUsers: recentActivityUsers.length,
-      allCurrentlyActive: allCurrentlyActive.length,
-      activeUsersCount,
-      totalToolUsage,
-      totalPayments,
-      totalActiveSubscriptions,
-      totalPaymentVolume: totalPaymentVolume[0]?.totalVolume || 0
-    });
+    const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
+    const { data: recentTools } = await sb
+      .from('tool_histories')
+      .select('user_id')
+      .gte('generated_date', twoMinutesAgo.toISOString());
+    const recentActivityUsers = [...new Set((recentTools || []).map((r) => String(r.user_id)))];
+
+    const allCurrentlyActive = [...new Set([...currentlyActiveUsers, ...recentActivityUsers])];
+
+    const { count: totalActiveSubscriptions } = await sb
+      .from('subscriptions')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'active');
+
+    const vol = await PaymentHistory.aggregate([{ $match: { status: 'success' } }]);
+
+    const [totalToolUsage, totalPayments, subscriptionStats, toolUsageStats] = await Promise.all([
+      ToolHistory.countDocuments({ generatedDate: { $gte: last30Days } }),
+      PaymentHistory.countDocuments({}),
+      getSubscriptionStats(),
+      getToolUsageStats(),
+    ]);
 
     return {
-      totalUsers,
-      newUsers,
-      activeUsers: activeUsersCount,
+      totalUsers: totalUsers || 0,
+      newUsers: newUsers || 0,
+      activeUsers: allCurrentlyActive.length,
       totalToolUsage,
       totalPayments,
-      totalActiveSubscriptions,
-      totalPaymentVolume: totalPaymentVolume[0]?.totalVolume || 0,
+      totalActiveSubscriptions: totalActiveSubscriptions || 0,
+      totalPaymentVolume: vol[0]?.totalVolume || 0,
       subscriptions: subscriptionStats.subscriptions,
       payments: subscriptionStats.payments,
-      topTools: toolUsageStats.slice(0, 5)
+      topTools: toolUsageStats.slice(0, 5),
     };
   } catch (error) {
     console.error('Error getting dashboard stats:', error);
@@ -431,215 +305,132 @@ async function getDashboardStats() {
   }
 }
 
-// Auto-cleanup old active sessions (called by getDashboardStats)
 async function cleanupOldActiveSessions() {
   try {
-    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-    
-    // Find and update sessions that are marked as active but haven't been updated recently
-    const result = await SessionLog.updateMany(
-      {
-        isActive: true,
-        loginAt: { $lt: tenMinutesAgo }
-      },
-      {
-        isActive: false,
-        logoutAt: new Date(),
-        duration: {
-          $function: {
-            body: function(loginAt, logoutAt) {
-              return Math.floor((logoutAt - loginAt) / 1000);
-            },
-            args: ['$loginAt', '$$NOW'],
-            lang: 'js'
-          }
-        }
-      }
+    await SessionLog.updateMany(
+      { isActive: true, loginAt: { $lt: new Date(Date.now() - 10 * 60 * 1000) } },
+      {}
     );
-
-    if (result.modifiedCount > 0) {
-      console.log(`🧹 Auto-cleaned ${result.modifiedCount} old active sessions`);
-    }
   } catch (error) {
     console.error('Error cleaning up old active sessions:', error);
   }
 }
 
-// Get revenue analytics
 async function getRevenueAnalytics() {
   try {
     await dbConnect();
-    
-    const revenueStats = await PaymentHistory.aggregate([
+    return PaymentHistory.aggregate([
       {
         $group: {
-          _id: {
-            $dateToString: { format: "%Y-%m", date: "$createdDate" }
-          },
+          _id: { $dateToString: { format: '%Y-%m', date: '$createdDate' } },
           totalRevenue: { $sum: '$amount' },
           successfulPayments: { $sum: { $cond: [{ $eq: ['$status', 'success'] }, 1, 0] } },
-          failedPayments: { $sum: { $cond: [{ $eq: ['$status', 'failed'] }, 1, 0] } }
-        }
+          failedPayments: { $sum: { $cond: [{ $eq: ['$status', 'failed'] }, 1, 0] } },
+        },
       },
-      {
-        $sort: { _id: -1 }
-      }
     ]);
-
-    return revenueStats;
   } catch (error) {
     console.error('Error getting revenue analytics:', error);
     throw error;
   }
 }
 
-// Get detailed user information
 async function getUserDetails(userId) {
   try {
     await dbConnect();
-    
-    // Convert string userId to ObjectId
-    let objectId;
-    try {
-      objectId = new mongoose.Types.ObjectId(userId);
-    } catch (error) {
-      throw new Error('Invalid user ID format');
-    }
-    
-    // Get basic user info with aggregated stats
-    const userBasic = await User.aggregate([
-      {
-        $match: { _id: objectId }
-      },
-      {
-        $lookup: {
-          from: 'useranalytics',
-          localField: '_id',
-          foreignField: 'userId',
-          as: 'analytics'
-        }
-      },
-      {
-        $lookup: {
-          from: 'toolhistories',
-          localField: '_id',
-          foreignField: 'userId',
-          as: 'toolHistory'
-        }
-      },
-      {
-        $lookup: {
-          from: 'paymenthistories',
-          localField: '_id',
-          foreignField: 'userId',
-          as: 'payments'
-        }
-      },
-      {
-        $lookup: {
-          from: 'sessionlogs',
-          localField: '_id',
-          foreignField: 'userId',
-          as: 'sessions'
-        }
-      },
-      {
-        $addFields: {
-          totalToolUsage: { $size: '$toolHistory' },
-          totalPayments: { $size: '$payments' },
-          totalSpent: { $sum: '$payments.amount' },
-          lastToolUsage: { $max: '$toolHistory.generatedDate' },
-          lastLoginAt: { $max: '$sessions.loginAt' },
-          analyticsCount: { $size: '$analytics' }
-        }
-      }
+    const sb = getSupabase();
+
+    const { data: userRow, error: userErr } = await sb.from('users').select('*').eq('id', userId).maybeSingle();
+    if (userErr) throw userErr;
+    if (!userRow) throw new Error('User not found');
+
+    const [{ data: th }, { data: ph }, { data: sl }, { data: ua }] = await Promise.all([
+      sb.from('tool_histories').select('*').eq('user_id', userId),
+      sb.from('payment_histories').select('*').eq('user_id', userId),
+      sb.from('session_logs').select('*').eq('user_id', userId).order('login_at', { ascending: false }).limit(10),
+      sb.from('user_analytics').select('*').eq('user_id', userId),
     ]);
 
-    if (userBasic.length === 0) {
-      throw new Error('User not found');
-    }
+    const totalToolUsage = (th || []).length;
+    const totalPayments = (ph || []).length;
+    const totalSpent = (ph || []).reduce((s, p) => s + (Number(p.amount) || 0), 0);
+    let lastToolUsage = null;
+    (th || []).forEach((r) => {
+      const d = new Date(r.generated_date);
+      if (!lastToolUsage || d > lastToolUsage) lastToolUsage = d;
+    });
 
-    const user = userBasic[0];
+    const user = {
+      ...userRow,
+      _id: userRow.id,
+      totalToolUsage,
+      totalPayments,
+      totalSpent,
+      lastToolUsage,
+      lastLoginAt: sl && sl[0] ? new Date(sl[0].login_at) : null,
+      analyticsCount: (ua || []).length,
+      additionalData: userRow.additional_data || {},
+    };
 
-    // Get subscription details
-    const subscriptions = await Subscription.find({ userId: objectId })
-      .sort({ createdAt: -1 })
-      .lean();
+    const { data: subscriptions } = await sb
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
 
-    // Get payment history
-    const paymentHistory = await PaymentHistory.find({ userId: objectId })
-      .sort({ createdDate: -1 })
-      .lean();
-
-    // Get login history
-    const loginHistory = await SessionLog.find({ userId: objectId })
-      .sort({ loginAt: -1 })
-      .limit(10)
-      .lean();
-
-    // Get tool usage statistics
-    const toolUsage = await ToolHistory.aggregate([
-      {
-        $match: { userId: objectId }
-      },
-      {
-        $group: {
-          _id: '$toolName',
-          usageCount: { $sum: 1 },
-          lastUsed: { $max: '$generatedDate' }
-        }
-      },
-      {
-        $sort: { usageCount: -1 }
-      }
-    ]);
+    const toolUsageMap = {};
+    (th || []).forEach((r) => {
+      const k = r.tool_name || 'unknown';
+      if (!toolUsageMap[k]) toolUsageMap[k] = { usageCount: 0, lastUsed: null };
+      toolUsageMap[k].usageCount += 1;
+      const d = new Date(r.generated_date);
+      if (!toolUsageMap[k].lastUsed || d > toolUsageMap[k].lastUsed) toolUsageMap[k].lastUsed = d;
+    });
 
     return {
       ...user,
-      subscriptions: subscriptions.map(sub => {
+      subscriptions: (subscriptions || []).map((sub) => {
         const now = new Date();
-        const subscriptionDate = new Date(sub.createdAt);
-        
+        const subscriptionDate = new Date(sub.created_at);
         let remainingDays = 0;
         let calculatedEndDate = null;
-        
         if (sub.type === 'lifetime') {
-          remainingDays = -1; // Lifetime
+          remainingDays = -1;
           calculatedEndDate = null;
         } else {
-          // Monthly subscription - calculate remaining days
-          const daysSinceSubscription = Math.floor((now.getTime() - subscriptionDate.getTime()) / (1000 * 60 * 60 * 24));
+          const daysSinceSubscription = Math.floor(
+            (now.getTime() - subscriptionDate.getTime()) / (1000 * 60 * 60 * 24)
+          );
           remainingDays = Math.max(0, 30 - daysSinceSubscription);
-          calculatedEndDate = new Date(subscriptionDate.getTime() + (30 * 24 * 60 * 60 * 1000));
+          calculatedEndDate = new Date(subscriptionDate.getTime() + 30 * 24 * 60 * 60 * 1000);
         }
-        
         return {
           type: sub.type,
           amount: sub.amount,
           status: sub.status,
-          startDate: sub.createdAt,
-          endDate: sub.expiresAt || calculatedEndDate,
-          nextPaymentDate: sub.type === 'monthly' ? (sub.expiresAt || calculatedEndDate) : null,
-          remainingDays: remainingDays
+          startDate: sub.created_at,
+          endDate: sub.expires_at || calculatedEndDate,
+          nextPaymentDate: sub.type === 'monthly' ? sub.expires_at || calculatedEndDate : null,
+          remainingDays,
         };
       }),
-      paymentHistory: paymentHistory.map(payment => ({
+      paymentHistory: (ph || []).map((payment) => ({
         amount: payment.amount,
         status: payment.status,
-        date: payment.createdDate,
-        description: payment.description || `Payment ${payment.status}`
+        date: payment.created_date,
+        description: payment.description || `Payment ${payment.status}`,
       })),
-      loginHistory: loginHistory.map(session => ({
-        loginAt: session.loginAt,
-        logoutAt: session.logoutAt,
-        ipAddress: session.ipAddress,
-        userAgent: session.userAgent
+      loginHistory: (sl || []).map((session) => ({
+        loginAt: session.login_at,
+        logoutAt: session.logout_at,
+        ipAddress: session.ip_address,
+        userAgent: session.user_agent,
       })),
-      toolUsage: toolUsage.map(tool => ({
-        toolName: tool._id,
-        usageCount: tool.usageCount,
-        lastUsed: tool.lastUsed
-      }))
+      toolUsage: Object.entries(toolUsageMap).map(([toolName, v]) => ({
+        toolName,
+        usageCount: v.usageCount,
+        lastUsed: v.lastUsed,
+      })),
     };
   } catch (error) {
     console.error('Error getting user details:', error);
@@ -657,5 +448,5 @@ module.exports = {
   getDashboardStats,
   getRevenueAnalytics,
   getUserDetails,
-  cleanupOldActiveSessions
-}; 
+  cleanupOldActiveSessions,
+};

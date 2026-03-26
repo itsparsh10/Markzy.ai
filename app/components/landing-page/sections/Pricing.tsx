@@ -133,13 +133,13 @@ export default function Pricing() {
       }}
     >
         {/* Free Trial Highlight */}
-        <div className="text-center mb-8">
+        <div className="mb-8 text-center">
           <div className="inline-flex items-center px-6 py-3 rounded-full" style={{
             background: 'linear-gradient(135deg, rgba(29, 31, 137, 0.1) 0%, rgba(70, 173, 182, 0.1) 100%)',
             border: '1px solid rgba(70, 173, 182, 0.3)'
           }}>
-            <i className="fas fa-gift text-lg mr-3" style={{color: '#46adb6'}}></i>
-            <span className="font-semibold" style={{color: '#1d1f89'}}>
+            <i className="fas fa-gift mr-2 text-sm sm:mr-3 sm:text-lg" style={{color: '#46adb6'}}></i>
+            <span className="text-xs font-semibold sm:text-sm md:text-base" style={{color: '#1d1f89'}}>
               🎉 Limited Time: Access ALL Premium Features FREE for 14 Days 
             </span>
           </div>
@@ -161,14 +161,14 @@ export default function Pricing() {
               Pricing
             </span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-4">
+          <p className="mx-auto mb-4 max-w-3xl text-base text-gray-600 sm:text-lg md:text-xl">
             Try all our premium tools absolutely free for 14 days. Get full access to every paid feature - no restrictions, no credit card required.
           </p>
           
           
 
           {/* Billing Toggle */}
-          <div className="inline-flex items-center bg-white rounded-full p-1 shadow-sm">
+          <div className="inline-flex items-center rounded-full bg-white p-1 shadow-sm">
             <button
               onClick={() => setIsAnnual(false)}
               className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
@@ -188,7 +188,7 @@ export default function Pricing() {
               }`}
             >
               Annual
-              <span className="ml-2 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
+              <span className="ml-2 hidden rounded-full bg-green-100 px-2 py-1 text-xs text-green-700 sm:inline-block">
                 Save 20%
               </span>
             </button>
@@ -196,13 +196,13 @@ export default function Pricing() {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-3">
           {pricingPlans.map((plan, index) => (
             <div
               key={index}
-              className={`relative bg-white rounded-2xl shadow-sm border-2 transition-all duration-300 hover:shadow-lg ${
+              className={`relative rounded-2xl border-2 bg-white shadow-sm transition-all duration-300 hover:shadow-lg ${
                 plan.popular
-                  ? 'ring-4 transform scale-105'
+                  ? 'ring-4 md:scale-105'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
               style={plan.popular ? {
@@ -307,7 +307,7 @@ export default function Pricing() {
 
           {/* Enhanced FAQ Accordion - 2 Column Grid */}
           <div className="max-w-7xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid gap-6 md:grid-cols-2">
               {faqs.map((faq, index) => (
                 <div key={index} className="bg-white rounded-2xl border border-gray-100 overflow-hidden transition-all duration-300 hover:border-blue-400 h-fit">
                   <button

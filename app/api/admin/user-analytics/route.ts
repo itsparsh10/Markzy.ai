@@ -13,67 +13,81 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
     }
 
-    // Use the existing database connection pattern
-    const User = require('../../../../services/models/User.js');
-    const ToolHistory = require('../../../../services/models/ToolHistory.js');
-    const SessionLog = require('../../../../services/models/SessionLog.js');
-    const Subscription = require('../../../../services/models/Subscription.js');
+    const { getSupabase } = require('../../../../services/supabaseClient.js');
     const dbConnect = require('../../../../services/db.js');
-    
+    const ToolHistory = require('../../../../services/models/ToolHistory.js');
+
     await dbConnect();
-    
-    // Get all tool history records first
-    const allToolHistory = await ToolHistory.find({}).populate('userId', 'name email');
+
+    const sb = getSupabase();
+
+    const { data: thRows, error: thErr } = await sb.from('tool_histories').select('*');
+    if (thErr) throw thErr;
+
+    const { data: usersRows } = await sb.from('users').select('id, name, email');
+    type URow = { id: string; name: string; email: string };
+    const userById = new Map((usersRows || []).map((u: URow) => [u.id, u]));
+
+    const { data: subRows } = await sb
+      .from('subscriptions')
+      .select('user_id, subscription_name, type, status, created_at')
+      .eq('status', 'active')
+      .order('created_at', { ascending: false });
+
+    const userSubscriptionMap = new Map();
+    (subRows || []).forEach((r: any) => {
+      if (!userSubscriptionMap.has(r.user_id)) {
+        userSubscriptionMap.set(r.user_id, {
+          subscriptionName: r.subscription_name,
+          type: r.type,
+          status: r.status,
+        });
+      }
+    });
+
+    const allToolHistory = (thRows || []).map((r: any) => ({
+      userId: r.user_id,
+      toolName: r.tool_name,
+      generatedDate: r.generated_date,
+    }));
+
     console.log('All Tool History Records:', allToolHistory.length);
 
-    // Get all active subscriptions for users
-    const allSubscriptions = await Subscription.find({ status: 'active' }).sort({ createdAt: -1 });
-    const userSubscriptionMap = new Map();
-    
-    allSubscriptions.forEach((subscription: any) => {
-      userSubscriptionMap.set(subscription.userId.toString(), {
-        subscriptionName: subscription.subscriptionName,
-        type: subscription.type,
-        status: subscription.status
-      });
-    });
-    
-    // Group by user and tool to count usage
     const toolUsageMap = new Map();
-    
+
     allToolHistory.forEach((record: any) => {
-      const userId = record.userId;
+      const uid = record.userId;
       const toolName = record.toolName;
-      const key = `${userId._id}-${toolName}`;
-      
-      // Get user's subscription info
-      const userSubscription = userSubscriptionMap.get(userId._id.toString());
+      const key = `${uid}-${toolName}`;
+
+      const u = userById.get(uid) as URow | undefined;
+      const userSubscription = userSubscriptionMap.get(uid);
       const subscriptionName = userSubscription ? userSubscription.subscriptionName : 'Free';
       const subscriptionType = userSubscription ? userSubscription.type : 'free';
       const subscriptionStatus = userSubscription ? userSubscription.status : 'inactive';
-      
+
       if (!toolUsageMap.has(key)) {
         toolUsageMap.set(key, {
-          _id: userId._id,
-          username: userId.name || 'Unknown User',
-          email: userId.email || 'unknown@example.com',
+          _id: uid,
+          username: u?.name || 'Unknown User',
+          email: u?.email || 'unknown@example.com',
           toolName: toolName,
           usageCount: 0,
           lastVisited: record.generatedDate,
           firstUsed: record.generatedDate,
           subscription: subscriptionName,
           subscriptionType: subscriptionType,
-          status: subscriptionStatus
+          status: subscriptionStatus,
         });
       }
-      
+
       const entry = toolUsageMap.get(key);
       entry.usageCount += 1;
-      
+
       if (new Date(record.generatedDate) > new Date(entry.lastVisited)) {
         entry.lastVisited = record.generatedDate;
       }
-      
+
       if (new Date(record.generatedDate) < new Date(entry.firstUsed)) {
         entry.firstUsed = record.generatedDate;
       }

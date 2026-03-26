@@ -10,9 +10,10 @@ export async function POST(request: NextRequest) {
     await dbConnect();
     
     const { email, password } = await request.json();
+    const normalizedEmail = typeof email === 'string' ? email.toLowerCase() : '';
     
     // Validate input
-    if (!email || !password) {
+    if (!normalizedEmail || !password) {
       return NextResponse.json(
         { message: 'Email and password are required' },
         { status: 400 }
@@ -20,11 +21,18 @@ export async function POST(request: NextRequest) {
     }
     
     // Find user by email
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return NextResponse.json(
         { message: 'Invalid credentials' },
         { status: 401 }
+      );
+    }
+    
+    if (user.isActive === false) {
+      return NextResponse.json(
+        { message: 'Account disabled' },
+        { status: 403 }
       );
     }
     
@@ -39,7 +47,7 @@ export async function POST(request: NextRequest) {
     
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id, email: user.email },
+      { userId: user._id, user_id: user._id, email: user.email },
       process.env.JWT_SECRET || 'your-secret-key',
       { expiresIn: '24h' }
     );

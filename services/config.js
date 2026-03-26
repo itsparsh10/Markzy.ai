@@ -381,22 +381,9 @@ const COMMON_HEADERS = {
   'Accept': 'application/json',
 };
 
-// Update MongoDB configuration to use environment variables
-const MONGODB_CONFIG = {
-  URI: process.env.MONGODB_URI || 'mongodb://localhost:27017/',
-  OPTIONS: {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    maxPoolSize: 10,
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 45000,
-  }
-};
-
 module.exports = {
   API_CONFIG,
   ENDPOINTS,
   REQUEST_TYPES,
   COMMON_HEADERS,
-  MONGODB_CONFIG
 };

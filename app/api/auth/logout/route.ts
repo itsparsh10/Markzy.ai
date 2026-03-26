@@ -34,25 +34,10 @@ export async function POST(request: NextRequest) {
     // Find and update the most recent active session for this user
     try {
       const sessionLog = await SessionLog.findOneAndUpdate(
-        { 
-          userId, 
-          $or: [
-            { isActive: true },
-            { logoutAt: { $exists: false } }
-          ]
-        },
+        { userId, isActive: true },
         {
           logoutAt: new Date(),
           isActive: false,
-          duration: {
-            $function: {
-              body: function(loginAt: any, logoutAt: any) {
-                return Math.floor((logoutAt - loginAt) / 1000); // Duration in seconds
-              },
-              args: ['$loginAt', '$$NOW'],
-              lang: 'js'
-            }
-          }
         },
         { new: true }
       );

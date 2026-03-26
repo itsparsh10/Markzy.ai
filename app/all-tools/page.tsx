@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import { useRouter, usePathname } from "next/navigation";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 import Sidebar from "../components/Sidebar";
 import ToolsGrid from "../components/ToolsGrid";
 import Footer from "../components/Footer";
@@ -114,9 +113,12 @@ export default function AllTools() {
   
   // Use notification system
   const { recentNotifications, unreadCount, addNotification, markAsRead } = useNotificationSystem();
+  const hasInitNotifications = useRef(false);
 
   // Check for user login and add welcome notification
   useEffect(() => {
+    if (hasInitNotifications.current) return;
+    hasInitNotifications.current = true;
     const checkUserLogin = () => {
       const token = localStorage.getItem('authToken');
       const userData = localStorage.getItem('userData');
@@ -246,6 +248,7 @@ export default function AllTools() {
         draggable: true,
         progress: undefined,
         theme: "light",
+        toastId: "subscribe-success",
       }
     );
   };
@@ -345,7 +348,7 @@ export default function AllTools() {
                   <div className="relative">
                     <button
                       onClick={() => setShowNotifications(!showNotifications)}
-                      className="relative bg-white hover:bg-blue-50 p-2.5 rounded-full transition-colors text-blue-500 shadow-sm border border-blue-100 hover:border-blue-200"
+                      className="relative hidden md:inline-flex bg-white hover:bg-blue-50 p-2.5 rounded-full transition-colors text-blue-500 shadow-sm border border-blue-100 hover:border-blue-200"
                     >
                       <i className="fas fa-bell"></i>
                       {/* Notification badge */}
@@ -478,7 +481,7 @@ export default function AllTools() {
             </div>
 
             {/* Enhanced view controls with modern styling */}
-            <div className="flex flex-wrap items-center justify-between gap-4 mt-4">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4 mt-4">
               {/* Mobile search */}
               <div className="relative w-full md:hidden mb-2">
                 <input
@@ -502,7 +505,8 @@ export default function AllTools() {
               </div>
 
               {/* Modern filter buttons with active states */}
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="w-full overflow-x-auto pb-1 md:overflow-visible">
+                <div className="flex items-center gap-2 sm:gap-3 flex-nowrap md:flex-wrap min-w-max md:min-w-0 [&>button]:shrink-0">
                 <button
                   className={`px-4 py-2.5 rounded-md text-sm font-medium transition-all h-9 flex items-center justify-center ${
                     activeCategory === "all"
@@ -695,6 +699,7 @@ export default function AllTools() {
                 >
                   <i className="fas fa-magic text-sm mr-2"></i>Freestyle
                 </button>
+                </div>
               </div>
             </div>
           </div>
@@ -718,7 +723,6 @@ export default function AllTools() {
         {/* Footer positioned after main content */}
         <Footer />
       </div>
-      <ToastContainer />
     </div>
   );
 }

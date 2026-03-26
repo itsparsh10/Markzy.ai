@@ -1,68 +1,59 @@
-const mongoose = require('mongoose');
+const { getSupabase } = require('../supabaseClient');
 
-const ratingSchema = new mongoose.Schema({
-  // User reference
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  userName: { type: String, required: true },
-  userEmail: { type: String, required: true },
-  
-  // Rating details
-  overallRating: { 
-    type: Number, 
-    required: true,
-    min: 1,
-    max: 5
-  },
-  easeOfUse: { 
-    type: Number, 
-    min: 0,
-    max: 5,
-    default: 0
-  },
-  features: { 
-    type: Number, 
-    min: 0,
-    max: 5,
-    default: 0
-  },
-  support: { 
-    type: Number, 
-    min: 0,
-    max: 5,
-    default: 0
-  },
-  valueForMoney: { 
-    type: Number, 
-    min: 0,
-    max: 5,
-    default: 0
-  },
-  
-  // Feedback
-  feedback: { type: String },
-  recommendation: { type: Boolean, default: true },
-  
-  // Admin review
-  adminNotes: { type: String },
-  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  reviewedAt: { type: Date },
-  
-  // Timestamps
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
+function toDoc(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    _id: row.id,
+    userId: row.user_id,
+    userName: row.user_name,
+    userEmail: row.user_email,
+    overallRating: row.overall_rating,
+    easeOfUse: row.ease_of_use,
+    features: row.features,
+    support: row.support,
+    valueForMoney: row.value_for_money,
+    feedback: row.feedback,
+    recommendation: row.recommendation,
+    adminNotes: row.admin_notes,
+    adminId: row.admin_id,
+    reviewedAt: row.reviewed_at ? new Date(row.reviewed_at) : null,
+    createdAt: row.created_at ? new Date(row.created_at) : null,
+    updatedAt: row.updated_at ? new Date(row.updated_at) : null,
+  };
+}
 
-// Update the updatedAt field before saving
-ratingSchema.pre('save', function(next) {
-  this.updatedAt = new Date();
-  next();
-});
+async function find(query = {}) {
+  const sb = getSupabase();
+  let q = sb.from('ratings').select('*');
+  if (query.userId) q = q.eq('user_id', query.userId);
+  const { data, error } = await q.order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data || []).map(toDoc);
+}
 
-// Virtual for average rating
-ratingSchema.virtual('averageRating').get(function() {
-  const ratings = [this.easeOfUse, this.features, this.support, this.valueForMoney].filter(r => r > 0);
-  if (ratings.length === 0) return this.overallRating;
-  return (ratings.reduce((a, b) => a + b, 0) + this.overallRating) / (ratings.length + 1);
-});
+async function create(data) {
+  const sb = getSupabase();
+  const row = {
+    user_id: data.userId,
+    user_name: data.userName,
+    user_email: data.userEmail,
+    overall_rating: data.overallRating,
+    ease_of_use: data.easeOfUse ?? 0,
+    features: data.features ?? 0,
+    support: data.support ?? 0,
+    value_for_money: data.valueForMoney ?? 0,
+    feedback: data.feedback,
+    recommendation: data.recommendation !== undefined ? data.recommendation : true,
+    admin_notes: data.adminNotes,
+    admin_id: data.adminId,
+    reviewed_at: data.reviewedAt,
+  };
+  const { data: inserted, error } = await sb.from('ratings').insert(row).select('*').single();
+  if (error) throw error;
+  return toDoc(inserted);
+}
 
-module.exports = mongoose.models.Rating || mongoose.model('Rating', ratingSchema); 
+const Rating = { find, create };
+
+module.exports = Rating;

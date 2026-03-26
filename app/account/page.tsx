@@ -4,8 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "../components/Sidebar";
 import Link from "next/link";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 
 interface UserData {
   id: string;
@@ -205,6 +204,7 @@ export default function Account() {
       draggable: true,
       progress: undefined,
       theme: "light",
+      toastId: "logout-success",
     });
 
     // Redirect to login page after a short delay to show the toast
@@ -281,7 +281,7 @@ export default function Account() {
 
   if (loading) {
     return (
-      <div className="h-screen w-screen flex overflow-hidden bg-gray-50">
+      <div className="min-h-screen w-full flex overflow-x-hidden bg-gray-50">
         <Sidebar />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -802,20 +802,20 @@ export default function Account() {
   };
 
   return (
-    <div className="h-screen w-screen flex overflow-hidden bg-gray-50">
+    <div className="min-h-screen w-full flex overflow-x-hidden bg-gray-50">
       <Sidebar />
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+        <header className="bg-white border-b border-gray-200 px-3 sm:px-4 md:px-6 py-4">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg">
                 <i className="fas fa-user-circle text-white text-lg"></i>
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
                   Account Settings
                 </h1>
                 <p className="text-sm text-gray-500">
@@ -823,52 +823,43 @@ export default function Account() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Link
-                href="/all-tools"
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center gap-2"
-              >
-                <i className="fas fa-tools"></i>
-                All Tools
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm flex items-center gap-2"
-              >
-                <i className="fas fa-sign-out-alt"></i>
-                Logout
-              </button>
-            </div>
+            {/* Hidden header actions (All Tools / Logout) */}
           </div>
         </header>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
           <div className="max-w-6xl mx-auto">
             {/* Hero Welcome Card */}
-            <div className="bg-white rounded-2xl p-8 mb-8 border border-slate-200">
-              <div className="flex items-start gap-6">
-                <div className="bg-slate-100 rounded-2xl p-4 flex-shrink-0">
-                  <i className="fas fa-user text-2xl text-slate-600"></i>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="px-3 py-1 bg-slate-100 rounded-full text-xs font-medium text-slate-700">
-                      👋 Welcome Back
-                    </span>
-                    <span className="px-3 py-1 bg-slate-100 rounded-full text-xs font-medium text-slate-700">
-                      ✨ {userData.isActive ? "Active" : "Inactive"}
-                    </span>
+            <div className="bg-white rounded-2xl p-4 sm:p-6 md:p-8 mb-8 border border-slate-200 relative overflow-hidden">
+              <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)] gap-4 sm:gap-6">
+                <div className="bg-slate-50 rounded-2xl p-4 sm:p-5">
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className="bg-slate-100 rounded-2xl p-3 sm:p-4 flex-shrink-0">
+                      <i className="fas fa-user text-2xl text-slate-600"></i>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
+                        <span className="px-3 py-1 bg-slate-100 rounded-full text-xs font-medium text-slate-700">
+                          👋 Welcome Back
+                        </span>
+                        <span className="px-3 py-1 bg-slate-100 rounded-full text-xs font-medium text-slate-700">
+                          ✨ {userData.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </div>
+                      <h2 className="text-2xl sm:text-3xl font-semibold text-slate-800 break-words">
+                        Hello, {userData.name?.split(" ")[0] || "User"}!
+                      </h2>
+                    </div>
                   </div>
-                  <h2 className="text-3xl font-semibold mb-3 text-slate-800">
-                    Hello, {userData.name?.split(" ")[0] || "User"}!
-                  </h2>
+                </div>
+                <div className="min-w-0">
                   <p className="text-slate-600 mb-6">
                     Manage your account, track your usage, and customize your
                     Markzy experience.
                   </p>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                     <div className="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border border-slate-200">
                       <div className="w-8 h-8 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg flex items-center justify-center">
                         <i className="fas fa-tools text-slate-600 text-sm"></i>
@@ -919,7 +910,6 @@ export default function Account() {
                 </div>
               </div>
               {/* Floating Elements */}
-              <div className="absolute top-4 right-4 w-16 h-16 bg-gradient-to-br from-yellow-400/20 to-orange-400/20 rounded-full animate-pulse"></div>
             </div>
             {/* Profile Section */}
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
@@ -1668,7 +1658,6 @@ export default function Account() {
           </div>
         </div>
       </main>
-      <ToastContainer />
     </div>
   );
 }

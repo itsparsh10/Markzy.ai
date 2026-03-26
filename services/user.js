@@ -56,7 +56,7 @@ async function getUserProfile(token) {
       if (!user) {
         console.log('User not found by external ID, creating new user...');
         // Create a new user if not found
-        user = new User({
+        user = await User.create({
           name: `User ${decoded.user_id}`,
           email: `user_${decoded.user_id}@temp.com`,
           password: 'temp_password_' + Math.random().toString(36).substring(7),
@@ -69,7 +69,6 @@ async function getUserProfile(token) {
             subscribeNewsletter: true
           }
         });
-        await user.save();
         console.log('Created new user for external ID:', decoded.user_id);
       }
     }
@@ -115,10 +114,7 @@ async function getUserProfile(token) {
     if (!subscription && Subscription) {
       console.log(`Trying to find subscription by userId for user ${user.email}`);
       try {
-        const subscriptionDoc = await Subscription.findOne({
-          userId: user._id,
-          status: 'active'
-        }).sort({ createdAt: -1 });
+        const subscriptionDoc = await Subscription.findOneActiveByUser(user._id);
 
         if (subscriptionDoc) {
           console.log(`Found active subscription by userId for user ${user.email}:`, subscriptionDoc.subscriptionName);

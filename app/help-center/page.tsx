@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../components/Sidebar';
 import Link from 'next/link';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 
 interface HelpTicket {
   id: string;
@@ -215,9 +214,9 @@ export default function HelpCenter() {
                 setShowDetails(true);
               }}
             >
-              <div className="flex items-start justify-between">
+              <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-start gap-3 mb-2">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                       <i className={`${getCategoryIcon(ticket.category || 'general')} text-blue-600 text-sm`}></i>
                     </div>
@@ -232,7 +231,7 @@ export default function HelpCenter() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 mt-3">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-3">
                     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(ticket.status || 'open')}`}>
                       <i className={`${getStatusIcon(ticket.status || 'open')} mr-1`}></i>
                       {(ticket.status || 'open').charAt(0).toUpperCase() + (ticket.status || 'open').slice(1)}
@@ -250,7 +249,7 @@ export default function HelpCenter() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 self-end sm:self-auto">
                   <i className="fas fa-chevron-right text-gray-400"></i>
                 </div>
               </div>
@@ -493,16 +492,16 @@ export default function HelpCenter() {
   };
 
   return (
-    <div className="h-full w-full flex overflow-hidden bg-gray-50">
+    <div className="min-h-screen w-full flex overflow-x-hidden bg-gray-50">
       <Sidebar />
       
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-y-auto">
+      <main className="flex-1 flex flex-col overflow-y-auto min-w-0">
         {/* Help Center Page Content */}
-        <div className="py-4 px-6 overflow-y-auto">
+        <div className="py-4 px-3 sm:px-4 md:px-6 overflow-y-auto">
           {/* Header */}
-          <header className="w-full bg-white rounded-xl border border-gray-200 p-4 mb-4 shadow-md flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <header className="w-full bg-white rounded-xl border border-gray-200 p-4 mb-4 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3">
               <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center shadow-md transition-all hover:shadow-lg">
                 <i className="fas fa-headset text-white text-xl"></i>
               </div>
@@ -511,17 +510,17 @@ export default function HelpCenter() {
                 <p className="text-sm text-gray-500">Get support and find answers to your questions</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex w-full sm:w-auto items-center gap-2">
               <button 
                 onClick={() => setShowContactForm(!showContactForm)}
-                className="px-3 py-1.5 rounded-full text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors flex items-center gap-1.5"
+                className="flex-1 sm:flex-none px-3 py-1.5 rounded-full text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors flex items-center justify-center gap-1.5"
               >
                 <i className="fas fa-ticket-alt"></i>
                 <span>Submit Ticket</span>
               </button>
               <button 
                 onClick={() => window.open('mailto:hello@markzy.ai', '_blank')}
-                className="px-3 py-1.5 rounded-full text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-sm"
+                className="flex-1 sm:flex-none px-3 py-1.5 rounded-full text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center justify-center gap-1.5 shadow-sm"
               >
                 <i className="fas fa-envelope"></i>
                 <span>Email Support</span>
@@ -532,14 +531,14 @@ export default function HelpCenter() {
           {/* Hero Section */}
           <section className="w-full bg-white rounded-xl border border-gray-200 p-4 mb-4 shadow-md">
             <div className="flex flex-col items-center text-center py-4">
-              <h2 className="font-bold text-2xl text-gray-800 mb-2">How Can We Help You Today?</h2>
+              <h2 className="font-bold text-xl sm:text-2xl text-gray-800 mb-2">How Can We Help You Today?</h2>
               <p className="text-gray-600 max-w-2xl mb-4">
                 Our support team is here to help you get the most out of Markzy. Browse our help categories below or submit a ticket for personalized assistance.
               </p>
-              <div className="flex items-center gap-3 mt-2">
+              <div className="flex items-center gap-3 mt-2 w-full justify-center">
                 <button 
                   onClick={() => setShowContactForm(true)}
-                  className="px-4 py-2 rounded-full text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center gap-1.5 shadow-md"
+                  className="w-full sm:w-auto px-4 py-2 rounded-full text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center justify-center gap-1.5 shadow-md"
                 >
                   <span>Get Help Now</span>
                   <i className="fas fa-arrow-right"></i>
@@ -782,7 +781,6 @@ export default function HelpCenter() {
 
         </div>
       </main>
-      <ToastContainer />
     </div>
   );
 } 

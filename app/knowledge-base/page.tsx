@@ -363,31 +363,31 @@ export default function KnowledgeBase() {
   }, []);
 
   return (
-    <div className="h-full w-full flex overflow-hidden bg-gray-50">
+    <div className="min-h-screen w-full flex overflow-x-hidden bg-gray-50">
       <Sidebar />
       
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden w-full">
+      <main className="flex-1 flex flex-col overflow-hidden w-full min-w-0">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <header className="bg-white border-b border-gray-200 px-3 sm:px-4 md:px-6 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="flex items-start sm:items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center shadow-lg">
               <i className="fas fa-book-open text-white text-lg"></i>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">Knowledge Base</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Knowledge Base</h1>
               <p className="text-sm text-gray-500">Your marketing resource center</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
-            <div className="relative">
+          <div className="flex w-full lg:w-auto items-center gap-3">
+            <div className="relative flex-1 lg:flex-none">
               <input 
                 type="text" 
                 placeholder="Search knowledge base..." 
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-80 px-4 py-2.5 pl-10 pr-10 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full lg:w-80 px-4 py-2.5 pl-10 pr-10 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <i className="fas fa-search absolute left-3 top-3 text-gray-400"></i>
               {searchQuery && (
@@ -399,14 +399,14 @@ export default function KnowledgeBase() {
                 </button>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2">
               <span className="px-3 py-1.5 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">Resources</span>
             </div>
           </div>
         </header>
         
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 bg-gray-50">
           {/* Search Results */}
           {searchQuery && (
             <div className="mb-8">
@@ -480,7 +480,7 @@ export default function KnowledgeBase() {
           )}
 
           {/* Hero Section */}
-          <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600 rounded-3xl p-8 mb-8 text-white shadow-2xl overflow-hidden">
+          <div className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-cyan-600 rounded-3xl p-5 sm:p-8 mb-8 text-white shadow-2xl overflow-hidden">
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-10">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full -mr-16 -mt-16"></div>
@@ -488,8 +488,8 @@ export default function KnowledgeBase() {
               <div className="absolute top-1/2 right-1/4 w-16 h-16 bg-white rounded-full"></div>
             </div>
             
-            <div className="relative flex items-start gap-8">
-              <div className="bg-white/20 backdrop-blur-sm rounded-3xl p-6 flex-shrink-0 shadow-lg border border-white/20">
+            <div className="relative flex flex-col sm:flex-row items-start gap-5 sm:gap-8">
+              <div className="bg-white/20 backdrop-blur-sm rounded-3xl p-5 sm:p-6 flex-shrink-0 shadow-lg border border-white/20">
                 <i className="fas fa-lightbulb text-4xl text-yellow-300 drop-shadow-lg"></i>
               </div>
               <div className="flex-1">
@@ -501,8 +501,8 @@ export default function KnowledgeBase() {
                     ✨ AI-Powered
                   </span>
                 </div>
-                <h2 className="text-4xl font-bold mb-4 leading-tight">Marketing Knowledge Base</h2>
-                <p className="text-blue-100 text-xl mb-6 leading-relaxed">Access comprehensive marketing guides, templates, and best practices to grow your business with proven strategies.</p>
+                <h2 className="text-2xl sm:text-4xl font-bold mb-4 leading-tight">Marketing Knowledge Base</h2>
+                <p className="text-blue-100 text-base sm:text-xl mb-6 leading-relaxed">Access comprehensive marketing guides, templates, and best practices to grow your business with proven strategies.</p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   <div className="flex items-center gap-3 p-3 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
@@ -705,7 +705,7 @@ export default function KnowledgeBase() {
                     </div>
                   ))}
                 </div>
-                <Link href="/start-here" className="mt-4 w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center block">
+                <Link href="/upgrade-account" className="mt-4 w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center block">
                   Start Your Journey
                 </Link>
               </div>

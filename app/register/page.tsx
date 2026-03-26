@@ -4,8 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 
 export default function Register() {
   const router = useRouter();
@@ -176,12 +175,11 @@ export default function Register() {
             draggable: true,
             progress: undefined,
             theme: "light",
+            toastId: 'register-success',
           });
           
-          // Redirect to login page after a short delay to show the toast
-          setTimeout(() => {
-            router.push('/login');
-          }, 1500);
+          // Redirect immediately for faster signup flow
+          router.replace('/login');
         } else {
           // Registration failed
           const errorMessage = data.message || 'Registration failed. Please try again.';
@@ -194,6 +192,7 @@ export default function Register() {
             draggable: true,
             progress: undefined,
             theme: "light",
+            toastId: 'register-error',
           });
         }
       } catch (error) {
@@ -207,6 +206,7 @@ export default function Register() {
           draggable: true,
           progress: undefined,
           theme: "light",
+          toastId: 'register-error',
         });
       } finally {
         setIsLoading(false);
@@ -660,25 +660,6 @@ export default function Register() {
           </div>
         </div>
       </div>
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="dark"
-        toastStyle={{
-          backgroundColor: 'rgba(30, 41, 59, 0.95)',
-          color: 'white',
-          borderRadius: '12px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          backdropFilter: 'blur(10px)'
-        }}
-      />
     </div>
   );
 }

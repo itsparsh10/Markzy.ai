@@ -4,17 +4,15 @@ import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get('redirect') || '/all-tools';
+  const redirectUrl = '/all-tools';
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
-    rememberMe: false
+    password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -22,24 +20,25 @@ function LoginForm() {
 
   // Check if user is already logged in, redirect appropriately
   useEffect(() => {
+    router.prefetch('/all-tools');
     const token = localStorage.getItem('authToken');
     const userData = localStorage.getItem('userData');
     
     if (token && userData) {
       // Check if it's an admin token
       if (token.startsWith('admin-token-')) {
-        router.push('/admin_dashboard');
+        router.replace('/admin_dashboard');
       } else {
-        router.push(redirectUrl);
+        router.replace(redirectUrl);
       }
     }
   }, [router, redirectUrl]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }));
   };
 
@@ -82,12 +81,11 @@ function LoginForm() {
           draggable: true,
           progress: undefined,
           theme: "light",
+          toastId: 'admin-login-success',
         });
         
-        // Redirect to admin dashboard after a short delay
-        setTimeout(() => {
-          window.location.href = '/admin_dashboard';
-        }, 1500);
+        // Redirect immediately for faster login UX
+        router.replace('/admin_dashboard');
         return;
       } catch (error) {
         console.error('Admin login error:', error);
@@ -140,12 +138,11 @@ function LoginForm() {
           draggable: true,
           progress: undefined,
           theme: "light",
+          toastId: 'login-success',
         });
         
-        // Redirect to the intended page after a short delay to show the toast
-        setTimeout(() => {
-          router.push(redirectUrl);
-        }, 1000);
+        // Redirect immediately for faster login UX
+        router.replace(redirectUrl);
       } else {
         const errorMessage = data.message || 'Invalid email or password. Please try again.';
         setError(errorMessage);
@@ -160,6 +157,7 @@ function LoginForm() {
           draggable: true,
           progress: undefined,
           theme: "light",
+          toastId: 'login-error',
         });
       }
     } catch (error) {
@@ -177,6 +175,7 @@ function LoginForm() {
         draggable: true,
         progress: undefined,
         theme: "light",
+        toastId: 'login-error',
       });
     } finally {
       setIsLoading(false);
@@ -268,18 +267,8 @@ function LoginForm() {
               </div>
             </div>
 
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  name="rememberMe"
-                  checked={formData.rememberMe}
-                  onChange={handleInputChange}
-                  className="w-4 h-4 bg-white/10 border border-white/20 rounded focus:ring-2 focus:ring-white/30"
-                />
-                <span className="text-sm text-white">Remember me</span>
-              </label>
+            {/* Forgot Password */}
+            <div className="flex justify-end">
               <Link href="/forgot-password" className="text-sm text-blue-200 hover:text-white transition-colors">
                 Forgot password?
               </Link>
@@ -353,7 +342,6 @@ function LoginForm() {
           </p>
         </div>
       </div>
-      <ToastContainer />
     </div>
   );
 }

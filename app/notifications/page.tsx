@@ -1,8 +1,7 @@
 'use client';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 import Sidebar from '../components/Sidebar';
 
 // Notification Types
@@ -481,7 +480,6 @@ function NotificationsPageContent() {
           )}
         </div>
       </div>
-      <ToastContainer />
     </div>
   );
 }

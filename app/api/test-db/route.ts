@@ -4,32 +4,29 @@ import User from '../../../services/models/User.js';
 import Subscription from '../../../services/models/Subscription.js';
 import PaymentHistory from '../../../services/models/PaymentHistory.js';
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
-    // Test database connection
     await dbConnect();
-    console.log('Database connected successfully');
 
-    // Test model operations
     const userCount = await User.countDocuments();
     const subscriptionCount = await Subscription.countDocuments();
     const paymentHistoryCount = await PaymentHistory.countDocuments();
 
-    // Test creating a test user
-    const testUser = new User({
-      email: 'test@example.com',
+    const uniqueEmail = `test_${Date.now()}@example.com`;
+    const testUser = await User.create({
+      email: uniqueEmail,
       name: 'Test User',
       password: 'test_password',
       role: 'user',
-      isActive: true
+      isActive: true,
     });
 
-    await testUser.save();
-    console.log('Test user created:', testUser._id);
+    if (!testUser) {
+      throw new Error('Failed to create test user');
+    }
 
-    // Test creating a test subscription
-    const testSubscription = new Subscription({
-      subscriptionId: 'test_subscription_123',
+    const testSubscription = await Subscription.create({
+      subscriptionId: `test_subscription_${Date.now()}`,
       userId: testUser._id,
       amount: 29.99,
       currency: 'USD',
@@ -42,19 +39,19 @@ export async function GET(req: NextRequest) {
       stripeSessionId: 'test_session_123',
       metadata: {
         planId: 'test_plan',
-        customerEmail: 'test@example.com'
-      }
+        customerEmail: uniqueEmail,
+      },
     });
 
-    await testSubscription.save();
-    console.log('Test subscription created:', testSubscription._id);
+    if (!testSubscription) {
+      throw new Error('Failed to create test subscription');
+    }
 
-    // Test creating a test payment history
-    const testPaymentHistory = new PaymentHistory({
+    const testPaymentHistory = await PaymentHistory.create({
       userId: testUser._id,
       userName: 'Test User',
-      userEmail: 'test@example.com',
-      subscriptionId: 'test_subscription_123',
+      userEmail: uniqueEmail,
+      subscriptionId: testSubscription.subscriptionId,
       planName: 'Test Plan',
       planId: 'test_plan',
       createdDate: new Date(),
@@ -64,35 +61,34 @@ export async function GET(req: NextRequest) {
       metadata: {
         planType: 'monthly',
         originalAmount: 29.99,
-        currency: 'USD'
-      }
+        currency: 'USD',
+      },
     });
 
-    await testPaymentHistory.save();
-    console.log('Test payment history created:', testPaymentHistory._id);
+    if (!testPaymentHistory) {
+      throw new Error('Failed to create test payment history');
+    }
 
-    // Clean up test data
-    await User.findByIdAndDelete(testUser._id);
-    await Subscription.findByIdAndDelete(testSubscription._id);
     await PaymentHistory.findByIdAndDelete(testPaymentHistory._id);
+    await Subscription.findByIdAndDelete(testSubscription._id);
+    await User.findByIdAndDelete(testUser._id);
 
     return NextResponse.json({
       success: true,
-      message: 'Database and models working correctly',
+      message: 'Supabase models working correctly',
       counts: {
         users: userCount,
         subscriptions: subscriptionCount,
-        paymentHistory: paymentHistoryCount
-      }
+        paymentHistory: paymentHistoryCount,
+      },
     });
-
   } catch (error) {
     console.error('Database test failed:', error);
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : undefined
+        stack: error instanceof Error ? error.stack : undefined,
       },
       { status: 500 }
     );

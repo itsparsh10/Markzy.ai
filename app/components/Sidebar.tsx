@@ -4,8 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -73,6 +72,7 @@ export default function Sidebar() {
       draggable: true,
       progress: undefined,
       theme: "light",
+      toastId: 'logout-success',
     });
     
     // Redirect to login page after a short delay to show the toast
@@ -283,18 +283,21 @@ export default function Sidebar() {
         {/* Mobile Logo */}
         <div className="p-6">
           <Link href="/all-tools">
-            <h1 className="text-2xl font-bold p-3 rounded-md logo-bg cursor-pointer hover:opacity-80">
-              <span className="text-white font-extrabold text-shadow-sm">MARKETING<br/>MAGIC</span>
+            <h1 className="text-2xl font-bold p-3 rounded-md logo-bg cursor-pointer hover:opacity-80 flex items-center justify-start">
+              <Image 
+                src='/assets/images/logo.png' 
+                alt='Markzy' 
+                width={180} 
+                height={32} 
+                className='invert brightness-0 h-8 w-auto'
+              />
             </h1>
           </Link>
         </div>
         
         {/* Mobile Navigation */}
         <div className="flex-1 flex flex-col gap-1 p-2 fade-in">
-          <Link href="/start-here" className={`flex items-center gap-2 ${pathname === '/start-here' ? 'bg-[#46adb6]/70' : 'hover:bg-[#46adb6]/30'} text-white rounded-md px-4 py-2 font-medium button-hover`}>
-            <i className="fas fa-wand-magic-sparkles text-white w-5"></i>
-            <span>Start Here</span>
-          </Link>
+          {/* Hidden: Start Here */}
           <Link 
             href="/all-tools" 
             className={`flex items-center gap-2 ${pathname.startsWith('/all-tools') ? 'bg-[#46adb6]/70' : 'hover:bg-[#46adb6]/30'} rounded-md px-4 py-2 text-white/90`}
@@ -302,18 +305,9 @@ export default function Sidebar() {
             <i className="fas fa-tools text-[#46adb6] w-5"></i>
             <span>All Tools</span>
           </Link>
-          <Link href="/story-magic" className={`flex items-center gap-2 ${pathname === '/story-magic' ? 'bg-[#46adb6]/70' : 'hover:bg-[#46adb6]/30'} rounded-md px-4 py-2 text-white/90`}>
-            <i className="fas fa-wand-magic text-[#46adb6] w-5"></i>
-            <span>Story Magic</span>
-          </Link>
-          <Link href="/workflows" className={`flex items-center gap-2 ${pathname === '/workflows' ? 'bg-[#46adb6]/70' : 'hover:bg-[#46adb6]/30'} rounded-md px-4 py-2 text-white/90`}>
-            <i className="fas fa-list-check text-[#46adb6] w-5"></i>
-            <span>Workflows</span>
-          </Link>
-          <Link href="/commercial" className={`flex items-center gap-2 ${pathname === '/commercial' ? 'bg-[#46adb6]/70' : 'hover:bg-[#46adb6]/30'} rounded-md px-4 py-2 text-white/90`}>
-            <i className="fas fa-user text-[#46adb6] w-5"></i>
-            <span>Commercial</span>
-          </Link>
+          {/* Hidden: Story Magic */}
+          {/* Hidden: Workflows */}
+          {/* Hidden: Commercial */}
           <Link href="/support-calls" className={`flex items-center gap-2 ${pathname === '/support-calls' ? 'bg-[#46adb6]/70' : 'hover:bg-[#46adb6]/30'} rounded-md px-4 py-2 text-white/90`}>
             <i className="fas fa-calendar text-[#46adb6] w-5"></i>
             <span>Help Center</span>
@@ -347,7 +341,6 @@ export default function Sidebar() {
           </button>
         </div>
       </div>
-      <ToastContainer />
     </>
   );
 }

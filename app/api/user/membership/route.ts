@@ -12,11 +12,7 @@ async function getUserMembershipStatus(userId: string) {
   try {
     await dbConnect();
     
-    // Find user's active subscription
-    const subscription = await Subscription.findOne({ 
-      userId: userId,
-      status: 'active'
-    }).sort({ createdAt: -1 });
+    const subscription = await Subscription.findOneActiveByUser(userId);
     
     if (!subscription) {
       return {
@@ -64,9 +60,10 @@ async function getComprehensivePaymentHistory(userId: string) {
     await dbConnect();
     
     // Get all payment history for the user
-    const paymentHistory = await PaymentHistory.find({ 
-      userId: userId 
-    }).sort({ createdDate: -1 }).limit(50);
+    const paymentHistory = await PaymentHistory.find(
+      { userId },
+      { sort: { createdDate: -1 }, limit: 50 }
+    );
     
     // If no payment history found, try to create from subscriptions
     if (paymentHistory.length === 0) {
@@ -74,9 +71,10 @@ async function getComprehensivePaymentHistory(userId: string) {
       await createPaymentHistoryFromSubscriptions(userId);
       
       // Try to get payment history again
-      const retryPaymentHistory = await PaymentHistory.find({ 
-        userId: userId 
-      }).sort({ createdDate: -1 }).limit(50);
+      const retryPaymentHistory = await PaymentHistory.find(
+        { userId },
+        { sort: { createdDate: -1 }, limit: 50 }
+      );
       
       return retryPaymentHistory;
     }
@@ -91,10 +89,10 @@ async function getComprehensivePaymentHistory(userId: string) {
 // Helper function to create payment history from existing subscriptions
 async function createPaymentHistoryFromSubscriptions(userId: string) {
   try {
-    const subscriptions = await Subscription.find({ 
+    const subscriptions = await Subscription.find({
       userId: userId,
       status: 'active'
-    }).sort({ createdAt: -1 });
+    });
     
     for (const subscription of subscriptions) {
       // Check if payment history already exists for this subscription

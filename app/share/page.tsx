@@ -81,35 +81,35 @@ export default function ShareTheMagic() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50/30">
+    <div className="flex min-h-screen w-full overflow-x-hidden bg-slate-50/30">
       <Sidebar />
       
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-w-0 overflow-y-auto">
         {/* Header */}
-        <header className="bg-white border-b border-slate-200/50 px-8 py-6">
+        <header className="bg-white border-b border-slate-200/50 px-3 sm:px-4 md:px-8 py-4 sm:py-6">
           <div className="w-full">
-            <div className="flex items-center gap-4">
+            <div className="flex items-start sm:items-center gap-3 sm:gap-4">
               <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center">
                 <i className="fas fa-share-alt text-slate-600 text-xl"></i>
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-slate-800">Share Markzy</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Share Markzy</h1>
                 <p className="text-slate-600">Help others discover the power of AI-driven marketing with Markzy</p>
               </div>
             </div>
           </div>
         </header>
 
-        <div className="w-full p-8">
+        <div className="w-full p-3 sm:p-4 md:p-8">
           {/* Markzy Success Stories */}
-          <div className="bg-white/60 backdrop-blur-sm rounded-3xl border border-slate-200/50 p-8 mb-8 shadow-lg">
-            <div className="flex items-center gap-4 mb-8">
+          <div className="bg-white/60 backdrop-blur-sm rounded-3xl border border-slate-200/50 p-5 sm:p-8 mb-8 shadow-lg">
+            <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-8">
               <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl flex items-center justify-center shadow-lg">
                 <i className="fas fa-star text-white text-2xl"></i>
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-slate-800 mb-2">Markzy Success Stories</h2>
-                <p className="text-slate-600 text-lg">Real results from real Markzy users</p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-slate-800 mb-2">Markzy Success Stories</h2>
+                <p className="text-slate-600 text-base sm:text-lg">Real results from real Markzy users</p>
               </div>
             </div>
             

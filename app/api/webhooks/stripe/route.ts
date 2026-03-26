@@ -1,9 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import dbConnect from '../../../../services/db.js';
-import User from '../../../../services/models/User.js';
+import UserModel from '../../../../services/models/User.js';
 import Subscription from '../../../../services/models/Subscription.js';
 import PaymentHistory from '../../../../services/models/PaymentHistory.js';
+
+/** App user row (avoids collision with DOM `User` when typing model instances). */
+type AppUser = {
+  _id: string;
+  id?: string;
+  email: string;
+  name?: string;
+  password?: string;
+  role?: string;
+  Subscription_id?: string | null;
+  isActive?: boolean;
+  createdAt?: Date | null;
+  externalUserId?: string | null;
+  additionalData?: Record<string, unknown>;
+};
 
 // Initialize Stripe with the provided secret key
 const stripe = new Stripe('sk_test_51RmFMN093NmKUNibyNfjQlekyYKGmPZlw7VHTInd79PtJcZopVLU0ssoZfrynZHSslEbAptKULlREgP1UJF7SxWh00udPSH2aW', {
@@ -72,7 +87,7 @@ export async function POST(req: NextRequest) {
 
     // Verify models are available
     try {
-      const userCount = await User.countDocuments();
+      const userCount = await UserModel.countDocuments();
       const subscriptionCount = await Subscription.countDocuments();
       const paymentHistoryCount = await PaymentHistory.countDocuments();
       console.log(`Models verified - Users: ${userCount}, Subscriptions: ${subscriptionCount}, PaymentHistory: ${paymentHistoryCount}`);
@@ -152,7 +167,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     }
 
     // Enhanced user lookup and creation - prioritize authenticated user
-    let user = await findOrCreateUserWithPriority(
+    let user: AppUser | null = await findOrCreateUserWithPriority(
       customerEmail, 
       customerName || undefined, 
       session, 
@@ -221,7 +236,11 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     } else {
       // Create new subscription
       try {
-        subscription = await Subscription.create(subscriptionData);
+        const created = await Subscription.create(subscriptionData);
+        if (!created) {
+          throw new Error('Failed to create subscription');
+        }
+        subscription = created;
         console.log(`Created new subscription: ${subscription._id}`);
       } catch (createError) {
         console.error('Error creating subscription:', createError);
@@ -230,9 +249,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       }
     }
 
+    if (!subscription) {
+      throw new Error('Subscription missing after checkout handling');
+    }
+
     // Update user's subscription reference and status
     try {
-      await User.findByIdAndUpdate(user._id, {
+      await UserModel.findByIdAndUpdate(user._id, {
         Subscription_id: subscription._id,
         isActive: true,
       });
@@ -284,17 +307,23 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 }
 
 // Enhanced user lookup with priority for authenticated users
-async function findOrCreateUserWithPriority(email: string, name?: string, session?: Stripe.Checkout.Session, sessionUserId?: string, authenticatedUserId?: string) {
+async function findOrCreateUserWithPriority(
+  email: string,
+  name?: string,
+  session?: Stripe.Checkout.Session,
+  sessionUserId?: string,
+  authenticatedUserId?: string
+): Promise<AppUser | null> {
   try {
     console.log(`Looking for user with priority - Email: ${email}, Session User ID: ${sessionUserId}, Authenticated User ID: ${authenticatedUserId}`);
     
     // CRITICAL FIX: First priority - If we have an authenticated user ID, ALWAYS use that user
     if (authenticatedUserId && authenticatedUserId !== 'none' && authenticatedUserId !== 'anonymous') {
       console.log(`Priority 1: Looking for authenticated user by ID: ${authenticatedUserId}`);
-      let authenticatedUser = await User.findById(authenticatedUserId);
+      let authenticatedUser = await UserModel.findById(authenticatedUserId);
       if (authenticatedUser) {
         console.log(`✅ Found authenticated user: ${authenticatedUser.email} (ID: ${authenticatedUser._id})`);
-        return authenticatedUser;
+        return authenticatedUser as AppUser;
       } else {
         console.log(`❌ Authenticated user ID ${authenticatedUserId} not found in database, creating new user with this ID`);
         // ALWAYS create new user with the authenticated user ID - don't fall back to email lookup
@@ -305,10 +334,10 @@ async function findOrCreateUserWithPriority(email: string, name?: string, sessio
     // Second priority: If we have a session user ID and it's not anonymous, try to find that specific user
     if (sessionUserId && sessionUserId !== 'anonymous' && sessionUserId !== 'none') {
       console.log(`Priority 2: Looking for session user by ID: ${sessionUserId}`);
-      let sessionUser = await User.findById(sessionUserId);
+      let sessionUser = await UserModel.findById(sessionUserId);
       if (sessionUser) {
         console.log(`✅ Found session user: ${sessionUser.email} (ID: ${sessionUser._id})`);
-        return sessionUser;
+        return sessionUser as AppUser;
       } else {
         console.log(`❌ Session user ID ${sessionUserId} not found in database, creating new user with this ID`);
         // Create new user with the session user ID - don't fall back to email lookup
@@ -320,11 +349,11 @@ async function findOrCreateUserWithPriority(email: string, name?: string, sessio
     console.log(`Priority 3: No valid user IDs provided, using email-based lookup for: ${email}`);
     
     // Try to find by exact email match
-    let user = await User.findOne({ email: email.toLowerCase() });
+    let user = await UserModel.findOne({ email: email.toLowerCase() });
     
     if (user) {
       console.log(`✅ Found existing user by exact email match: ${user.email} (ID: ${user._id})`);
-      return user;
+      return user as AppUser;
     }
     
     // If no user found, create a new user (without specific ID)
@@ -337,7 +366,12 @@ async function findOrCreateUserWithPriority(email: string, name?: string, sessio
 }
 
 // Helper function to create a new user with specific ID
-async function createNewUserWithId(email: string, name?: string, userId?: string, session?: Stripe.Checkout.Session) {
+async function createNewUserWithId(
+  email: string,
+  name?: string,
+  userId?: string,
+  session?: Stripe.Checkout.Session
+): Promise<AppUser | null> {
   try {
     // Extract name from session or use provided name
     let userName = name;
@@ -371,7 +405,7 @@ async function createNewUserWithId(email: string, name?: string, userId?: string
     }
 
     // Check if user with this email already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    const existingUser = await UserModel.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       console.log(`⚠️  User with email ${email} already exists: ${existingUser._id}`);
       
@@ -381,14 +415,14 @@ async function createNewUserWithId(email: string, name?: string, userId?: string
         console.log(`Using existing user ${existingUser._id} instead of creating duplicate`);
       }
       
-      return existingUser;
+      return existingUser as AppUser;
     }
 
-    const newUser = new User(userData);
+    const newUser = new UserModel(userData);
     await newUser.save();
     console.log(`Created new user: ${newUser._id} for email: ${email}`);
     
-    return newUser;
+    return newUser as unknown as AppUser;
   } catch (error) {
     console.error('Error creating new user with ID:', error);
     
@@ -409,10 +443,10 @@ async function createNewUserWithId(email: string, name?: string, userId?: string
           }
         };
 
-        const newUser = new User(userData);
+        const newUser = new UserModel(userData);
         await newUser.save();
         console.log(`Created new user without specific ID: ${newUser._id} for email: ${email}`);
-        return newUser;
+        return newUser as unknown as AppUser;
       } catch (retryError) {
         console.error('Error creating user without specific ID:', retryError);
         return null;
@@ -424,34 +458,34 @@ async function createNewUserWithId(email: string, name?: string, userId?: string
 }
 
 // Enhanced user lookup function (for existing users only)
-async function findUserByEmail(email: string) {
+async function findUserByEmail(email: string): Promise<AppUser | null> {
   try {
     // First try to find by exact email match
-    let user = await User.findOne({ email: email.toLowerCase() });
+    let user = await UserModel.findOne({ email: email.toLowerCase() });
     
     if (user) {
       console.log(`Found user by exact email match: ${user.email}`);
-      return user;
+      return user as AppUser;
     }
     
     // Try case-insensitive search
-    user = await User.findOne({ email: { $regex: new RegExp(`^${email}$`, 'i') } });
+    user = await UserModel.findOne({ email: { $regex: new RegExp(`^${email}$`, 'i') } });
     
     if (user) {
       console.log(`Found user by case-insensitive email match: ${user.email}`);
-      return user;
+      return user as AppUser;
     }
     
     // Try to find by partial email match (for cases where email might be slightly different)
     const emailDomain = email.split('@')[1];
     if (emailDomain) {
-      user = await User.findOne({ 
+      user = await UserModel.findOne({ 
         email: { $regex: new RegExp(`@${emailDomain}$`, 'i') }
       });
       
       if (user) {
         console.log(`Found user by domain match: ${user.email}`);
-        return user;
+        return user as AppUser;
       }
     }
     
@@ -612,7 +646,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     }
 
     // Update user status to active
-    await User.findByIdAndUpdate(user._id, { isActive: true });
+    await UserModel.findByIdAndUpdate(user._id, { isActive: true });
     
     console.log(`Payment succeeded for user: ${customerEmail}`);
 
@@ -651,7 +685,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     }
 
     // Update user status to inactive
-    await User.findByIdAndUpdate(user._id, { isActive: false });
+    await UserModel.findByIdAndUpdate(user._id, { isActive: false });
     
     console.log(`Payment failed for user: ${customerEmail}`);
 
@@ -696,7 +730,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     );
 
     // Update user status to inactive
-    await User.findByIdAndUpdate(user._id, { isActive: false });
+    await UserModel.findByIdAndUpdate(user._id, { isActive: false });
     
     console.log(`Subscription cancelled for user: ${customerEmail}`);
 
@@ -735,7 +769,7 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     }
 
     // Update user status to active
-    await User.findByIdAndUpdate(user._id, { isActive: true });
+    await UserModel.findByIdAndUpdate(user._id, { isActive: true });
     
     console.log(`Payment intent succeeded for user: ${customerEmail}`);
 
@@ -774,7 +808,7 @@ async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
     }
 
     // Update user status to inactive
-    await User.findByIdAndUpdate(user._id, { isActive: false });
+    await UserModel.findByIdAndUpdate(user._id, { isActive: false });
     
     console.log(`Payment intent failed for user: ${customerEmail}`);
 

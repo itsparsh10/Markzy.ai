@@ -10,8 +10,10 @@ export async function POST(request: NextRequest) {
     const userData = await request.json();
     const { email, password, firstName, lastName, companyName, jobTitle, companySize, industry, website, marketingGoals, monthlyBudget, marketingTools, subscribeNewsletter } = userData;
     
+    const normalizedEmail = typeof email === 'string' ? email.toLowerCase() : '';
+    
     // Validate required fields
-    if (!email || !password || !firstName || !lastName) {
+    if (!normalizedEmail || !password || !firstName || !lastName) {
       return NextResponse.json(
         { message: 'Email, password, first name, and last name are required' },
         { status: 400 }
@@ -19,7 +21,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return NextResponse.json(
         { message: 'User already exists with this email' },
@@ -27,12 +29,11 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
+    // Hash password (10 rounds for faster registration while keeping good security)
+    const hashedPassword = await bcrypt.hash(password, 10);
     
-    // Create user with all registration data
-    const user = new User({
-      email,
+    const created = await User.create({
+      email: normalizedEmail,
       password: hashedPassword,
       name: `${firstName} ${lastName}`,
       additionalData: {
@@ -46,20 +47,21 @@ export async function POST(request: NextRequest) {
         marketingGoals,
         monthlyBudget,
         marketingTools,
-        subscribeNewsletter
-      }
+        subscribeNewsletter,
+      },
     });
-    
-    await user.save();
-    
-    // Return success response
+
+    if (!created) {
+      return NextResponse.json({ message: 'Failed to create user' }, { status: 500 });
+    }
+
     return NextResponse.json({
       message: 'User registered successfully',
       user: {
-        id: user._id,
-        email: user.email,
-        name: user.name
-      }
+        id: created._id,
+        email: created.email,
+        name: created.name,
+      },
     });
     
   } catch (error) {

@@ -440,14 +440,14 @@ export default function UpgradeAccount() {
   };
   
   return (
-    <div className="h-full w-full flex overflow-hidden bg-gray-50">
+    <div className="min-h-screen w-full flex overflow-x-hidden bg-gray-50">
       <Sidebar />
       
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden min-w-0">
         {/* Fixed Header */}
-        <header className="bg-white border-b border-gray-200 p-4 flex items-center justify-between shadow-sm z-10">
-          <div className="flex items-center gap-3">
+        <header className="bg-white border-b border-gray-200 px-3 sm:px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm z-10">
+          <div className="flex items-start sm:items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-400 rounded-xl flex items-center justify-center shadow-md">
               <i className="fas fa-crown text-white text-lg"></i>
             </div>
@@ -455,11 +455,6 @@ export default function UpgradeAccount() {
               <h1 className="font-bold text-xl text-gray-800">Upgrade Your Account</h1>
               <p className="text-xs text-gray-500">Unlock the full power of Markzy</p>
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="px-3 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-full text-sm font-medium hover:bg-gray-50 transition-colors">
-              <i className="fas fa-arrow-left mr-1"></i> Back to Dashboard
-            </Link>
           </div>
         </header>
         
@@ -474,11 +469,11 @@ export default function UpgradeAccount() {
                     <i className="fas fa-crown text-3xl text-white"></i>
                   </div>
                   
-                  <h2 className="text-3xl font-bold mb-4">
+                  <h2 className="text-2xl sm:text-3xl font-bold mb-4">
                     {membershipStatus.planType === 'lifetime' ? 'Lifetime Membership Active' : 'Active Membership'}
                   </h2>
                   
-                  <p className="text-xl mb-6">
+                  <p className="text-lg sm:text-xl mb-6">
                     {membershipStatus.planName}
                   </p>
                   
@@ -506,16 +501,16 @@ export default function UpgradeAccount() {
                     </div>
                   )}
                   
-                  <div className="mt-8 flex justify-center gap-4">
+                  <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
                     <button 
                       onClick={() => window.location.href = '/dashboard'}
-                      className="px-6 py-3 bg-white text-green-600 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                      className="w-full sm:w-auto px-6 py-3 bg-white text-green-600 rounded-lg font-medium hover:bg-gray-100 transition-colors"
                     >
                       Go to Dashboard
                     </button>
                     <button 
                       onClick={() => window.location.href = '/all-tools'}
-                      className="px-6 py-3 bg-white/20 text-white rounded-lg font-medium hover:bg-white/30 transition-colors"
+                      className="w-full sm:w-auto px-6 py-3 bg-white/20 text-white rounded-lg font-medium hover:bg-white/30 transition-colors"
                     >
                       Explore Tools
                     </button>
@@ -557,7 +552,7 @@ export default function UpgradeAccount() {
                 
                 {/* Plan Details */}
                 <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-lg p-4 max-w-md mx-auto">
-                  <div className="grid grid-cols-2 gap-4 text-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-center">
                     <div>
                       <p className="text-green-100 text-sm">Plan</p>
                       <p className="font-bold text-lg">{paymentSuccess.planName}</p>

@@ -262,12 +262,15 @@ export async function POST(request: NextRequest) {
         try {
           // Create subscription first
           const subscription = await createSubscription(userId, sessionId, planName, planId, amount || 0, customerEmail);
+          if (!subscription) {
+            throw new Error('Failed to create subscription');
+          }
           console.log('✅ Subscription created successfully:', subscription._id);
 
-          // CRITICAL: Always create payment history in MongoDB
-          console.log('💾 Creating payment history in MongoDB for new subscription');
+          // CRITICAL: Always create payment history in the database
+          console.log('💾 Creating payment history for new subscription');
           const paymentHistory = await createPaymentHistory(userId, sessionId, planName, planId, amount || 0, finalUserData);
-          console.log('✅ Payment history created in MongoDB:', paymentHistory._id);
+          console.log('✅ Payment history created:', paymentHistory._id);
 
           // Verify payment history was stored
           const historyStored = await verifyPaymentHistoryStored(userId, sessionId);
@@ -374,7 +377,7 @@ async function ensurePaymentHistoryExists(userId: string, sessionId: string, pla
     if (!existingPayment) {
       console.log('📝 Creating payment history for existing subscription:', sessionId);
       const result = await createPaymentHistory(userId, sessionId, planName, planId, amount, user);
-      console.log('✅ Payment history created successfully:', result._id);
+      console.log('✅ Payment history created successfully:', result?._id);
     } else {
       console.log('ℹ️ Payment history already exists for session:', sessionId);
     }
@@ -395,8 +398,8 @@ async function createPaymentHistory(userId: string, sessionId: string, planName:
       amount,
       userEmail: user.email,
       userName: user.name,
-      userCreated: user.createdAt === user.updatedAt,
-      userMongoId: user._id,
+      userCreated: Boolean(user.createdAt && user.updatedAt && user.createdAt === user.updatedAt),
+      userDbId: user._id,
       userExternalId: user.externalUserId
     });
 
@@ -417,7 +420,7 @@ async function createPaymentHistory(userId: string, sessionId: string, planName:
       finalUserName,
       finalUserEmail,
       userId,
-      userMongoId: user._id,
+      userDbId: user._id,
       userExternalId: user.externalUserId
     });
 
@@ -437,14 +440,14 @@ async function createPaymentHistory(userId: string, sessionId: string, planName:
         planType: planId === 'lifetime' ? 'lifetime' : 'monthly',
         originalAmount: amount,
         currency: 'USD',
-        userCreated: user.createdAt === user.updatedAt, // Indicates if user was just created
-        verifiedByToken: true, // Indicates this was verified by token
+        userCreated: Boolean(user.createdAt && user.updatedAt && user.createdAt === user.updatedAt),
+        verifiedByToken: true,
         externalUserId: user.externalUserId || null,
         selectionMethod: 'verify_payment_endpoint',
-        newUser: user.createdAt === user.updatedAt, // Indicates this is a new user
-        fetchedFromProfile: !!user.id, // Indicates if data was fetched from profile API
-        tokenType: user.externalUserId ? 'external_api' : 'regular_jwt', // Track token type used
-        storedInMongoDB: true // Indicates this was stored in MongoDB
+        newUser: Boolean(user.createdAt && user.updatedAt && user.createdAt === user.updatedAt),
+        fetchedFromProfile: !!user.id,
+        tokenType: user.externalUserId ? 'external_api' : 'regular_jwt',
+        storedInSupabase: true
       },
       paymentMethod: 'card',
       currency: 'USD',
@@ -455,7 +458,7 @@ async function createPaymentHistory(userId: string, sessionId: string, planName:
       }
     };
 
-    console.log('💾 Payment history data to save in MongoDB:', {
+    console.log('💾 Payment history data to save:', {
       userId: paymentHistoryData.userId,
       userEmail: paymentHistoryData.userEmail,
       userName: paymentHistoryData.userName,
@@ -466,32 +469,32 @@ async function createPaymentHistory(userId: string, sessionId: string, planName:
       newUser: paymentHistoryData.metadata.newUser,
       fetchedFromProfile: paymentHistoryData.metadata.fetchedFromProfile,
       tokenType: paymentHistoryData.metadata.tokenType,
-      storedInMongoDB: paymentHistoryData.metadata.storedInMongoDB
+      storedInSupabase: paymentHistoryData.metadata.storedInSupabase
     });
 
-    // CRITICAL: Save to MongoDB
-    const paymentHistory = new PaymentHistory(paymentHistoryData);
-    const savedPayment = await paymentHistory.save();
+    const savedPayment = await PaymentHistory.create(paymentHistoryData);
+    if (!savedPayment) {
+      throw new Error('Failed to persist payment history');
+    }
 
-    console.log('✅ Payment history saved successfully in MongoDB:', {
+    console.log('✅ Payment history saved successfully:', {
       paymentHistoryId: savedPayment._id,
       userId: savedPayment.userId,
       userEmail: savedPayment.userEmail,
       userName: savedPayment.userName,
-      storedInMongoDB: true
+      storedInSupabase: true
     });
 
-    // Verify the payment was actually saved
     const verifyPayment = await PaymentHistory.findById(savedPayment._id);
     if (verifyPayment) {
-      console.log('✅ Payment history verified in MongoDB:', verifyPayment._id);
+      console.log('✅ Payment history verified:', verifyPayment._id);
     } else {
-      console.error('❌ Payment history not found in MongoDB after save!');
+      console.error('❌ Payment history not found after save!');
     }
 
     return savedPayment;
   } catch (error) {
-    console.error('❌ Error saving payment history in MongoDB:', error);
+    console.error('❌ Error saving payment history:', error);
     console.error('Payment history data that failed:', {
       userId,
       sessionId,
@@ -500,8 +503,8 @@ async function createPaymentHistory(userId: string, sessionId: string, planName:
       amount,
       userEmail: user?.email,
       userName: user?.name,
-      userCreated: user?.createdAt === user?.updatedAt,
-      userMongoId: user?._id,
+      userCreated: Boolean(user?.createdAt && user?.updatedAt && user.createdAt === user.updatedAt),
+      userDbId: user?._id,
       userExternalId: user?.externalUserId
     });
     throw error;

@@ -103,8 +103,7 @@ export default function ToolCard({
   
   return (
     <div 
-      className="relative flex flex-col bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group h-full w-full"
-      style={{ minHeight: '280px', maxHeight: '200px', minWidth: '250px', maxWidth: '350px' }}
+      className="relative flex flex-col bg-white rounded-xl border border-gray-200 shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group h-full w-full min-h-[280px] md:min-w-[250px] md:max-w-[350px]"
       onClick={() => onClick(toolId)}
     >
       {/* Decorative elements */}

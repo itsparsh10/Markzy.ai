@@ -13,18 +13,18 @@ export default function StoryMagic() {
   ];
 
   return (
-    <div className="h-full w-full flex overflow-hidden bg-gray-50">
+    <div className="min-h-screen w-full flex overflow-x-hidden bg-gray-50">
       <Sidebar />
       
-      <main className="flex-1 flex flex-col overflow-hidden w-full">
+      <main className="flex-1 flex flex-col overflow-hidden w-full min-w-0">
         {/* Modern header with blue accent */}
-        <header className="w-full bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between flex-shrink-0 shadow-sm">
-          <div className="flex items-center gap-3">
+        <header className="w-full bg-white border-b border-gray-200 px-3 sm:px-4 md:px-6 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-shrink-0 shadow-sm">
+          <div className="flex items-start sm:items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center shadow-md transition-all hover:shadow-lg hover:bg-blue-700">
               <i className="fas fa-book-open text-white text-lg"></i>
             </div>
             <div>
-              <span className="font-semibold text-gray-800 text-xl">Story Magic</span>
+              <span className="font-semibold text-gray-800 text-lg sm:text-xl">Story Magic</span>
               <div className="text-xs text-blue-600 font-medium">Craft your brand story</div>
             </div>
           </div>
@@ -43,7 +43,7 @@ export default function StoryMagic() {
         {/* Content area */}
         <div className="flex-1 flex flex-col overflow-hidden w-full">
           {/* Welcome Banner - Blue gradient banner */}
-          <div className="w-full bg-gradient-to-r from-blue-700 to-blue-500 py-6 px-8 flex-shrink-0 shadow-md">
+          <div className="w-full bg-gradient-to-r from-blue-700 to-blue-500 py-6 px-3 sm:px-4 md:px-8 flex-shrink-0 shadow-md">
             <div className="max-w-5xl mx-auto">
               <div className="flex flex-col md:flex-row md:items-center justify-between">
                 <div className="md:max-w-2xl">
@@ -80,14 +80,14 @@ export default function StoryMagic() {
           
           {/* Main content area */}
           <div className="flex-1 overflow-auto w-full">
-            <div className="max-w-5xl mx-auto px-6 py-8">
+            <div className="max-w-5xl mx-auto px-3 sm:px-4 md:px-6 py-8">
               {/* Story Header with tab navigation */}
               <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                   <h3 className="text-xl font-semibold text-gray-800">Your Brand Story</h3>
                   <p className="text-gray-500 text-sm mt-1">Share what makes your business special</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                   <span className="text-blue-600 bg-blue-50 px-3 py-1 rounded-md text-sm font-medium">
                     <i className="fas fa-exclamation-circle mr-1"></i>
                     Answers Needed
@@ -100,8 +100,8 @@ export default function StoryMagic() {
               </div>
 
               {/* Tab navigation */}
-              <div className="mb-6 border-b border-gray-200">
-                <div className="flex space-x-8">
+              <div className="mb-6 border-b border-gray-200 overflow-x-auto">
+                <div className="flex min-w-max space-x-6 sm:space-x-8">
                   <button className="border-b-2 border-blue-600 text-blue-600 pb-2 px-1 font-medium">
                     Questions
                   </button>

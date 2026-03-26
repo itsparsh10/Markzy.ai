@@ -1,80 +1,31 @@
-const mongoose = require('mongoose');
-const dbConnect = require('../services/db.js');
+const { getSupabase } = require('../services/supabaseClient.js');
 
-// Import all models
-const User = require('../services/models/User.js');
-const Subscription = require('../services/models/Subscription.js');
-const ToolHistory = require('../services/models/ToolHistory.js');
-const PaymentHistory = require('../services/models/PaymentHistory.js');
-const UserAnalytics = require('../services/models/UserAnalytics.js');
-const Login = require('../services/models/login.js');
-const Register = require('../services/models/register.js');
-
-// Database models export
-const models = {
-  User,
-  Subscription,
-  ToolHistory,
-  PaymentHistory,
-  UserAnalytics,
-  Login,
-  Register
-};
-
-// Database connection status
-const getConnectionStatus = () => {
-  return {
-    isConnected: mongoose.connection.readyState === 1,
-    readyState: mongoose.connection.readyState,
-    host: mongoose.connection.host,
-    port: mongoose.connection.port,
-    name: mongoose.connection.name
-  };
-};
-
-// Database statistics
-const getDatabaseStats = async () => {
-  try {
-    await dbConnect();
-    
-    const stats = {};
-    const collections = ['users', 'subscriptions', 'toolhistories', 'paymenthistories', 'useranalytics'];
-    
-    for (const collection of collections) {
-      try {
-        const count = await mongoose.connection.db.collection(collection).countDocuments();
-        stats[collection] = count;
-      } catch (error) {
-        stats[collection] = 0;
-      }
-    }
-    
-    return {
-      connection: getConnectionStatus(),
-      collections: stats
-    };
-  } catch (error) {
-    console.error('Error getting database stats:', error);
-    throw error;
+async function getDatabaseStats() {
+  const sb = getSupabase();
+  const tables = [
+    'users',
+    'subscriptions',
+    'tool_histories',
+    'payment_histories',
+    'session_logs',
+    'user_analytics',
+    'help_tickets',
+    'ratings',
+    'tool_suggestions',
+    'form_queries',
+  ];
+  const stats = {};
+  for (const t of tables) {
+    const { count, error } = await sb.from(t).select('*', { count: 'exact', head: true });
+    stats[t] = error ? -1 : count ?? 0;
   }
-};
+  return stats;
+}
 
-// Database health check
-const healthCheck = async () => {
-  try {
-    await dbConnect();
-    await mongoose.connection.db.admin().ping();
-    return { status: 'healthy', message: 'Database is connected and responsive' };
-  } catch (error) {
-    return { status: 'unhealthy', message: error.message };
-  }
-};
+async function ping() {
+  const sb = getSupabase();
+  const { error } = await sb.from('users').select('id', { head: true, count: 'exact' });
+  return !error;
+}
 
-// Export the connection function
-module.exports = {
-  models,
-  dbConnect,
-  getConnectionStatus,
-  getDatabaseStats,
-  healthCheck
-}; 
+module.exports = { getDatabaseStats, ping };

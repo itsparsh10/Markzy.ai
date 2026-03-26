@@ -19,16 +19,17 @@ export async function POST(req: NextRequest) {
     if (testUserId) {
       user = await User.findById(testUserId);
       if (!user) {
-        user = new User({
+        user = await User.create({
           _id: testUserId,
+          id: testUserId,
           email: testEmail || `test_${testUserId}@example.com`,
           name: `Test User ${testUserId}`,
           password: 'test_password',
           role: 'user',
           isActive: true,
-          externalUserId: testUserId
+          externalUserId: typeof testUserId === 'number' ? testUserId : undefined,
         });
-        await user.save();
+        if (!user) throw new Error('Failed to create test user');
         console.log('Created test user:', user._id);
       } else {
         console.log('Found existing test user:', user._id);
@@ -70,8 +71,11 @@ export async function POST(req: NextRequest) {
       console.log('Updated existing subscription:', subscription._id);
     } else {
       subscription = await Subscription.create(subscriptionData);
+      if (!subscription) throw new Error('Failed to create subscription');
       console.log('Created new subscription:', subscription._id);
     }
+
+    if (!subscription) throw new Error('Missing subscription');
 
     // Update user subscription reference
     await User.findByIdAndUpdate(user._id, {
@@ -96,7 +100,7 @@ export async function POST(req: NextRequest) {
         originalAmount: testAmount || 29.99,
         currency: 'USD',
         testFlow: true,
-        newUser: user.createdAt === user.updatedAt
+        newUser: true
       },
       paymentMethod: 'card',
       currency: 'USD',
@@ -107,14 +111,17 @@ export async function POST(req: NextRequest) {
       }
     };
 
-    const paymentHistory = new PaymentHistory(paymentHistoryData);
-    await paymentHistory.save();
+    const paymentHistory = await PaymentHistory.create(paymentHistoryData);
+    if (!paymentHistory) throw new Error('Failed to create payment history');
     console.log('Created payment history:', paymentHistory._id);
 
-    // Verify the data was stored correctly
     const storedUser = await User.findById(user._id);
     const storedSubscription = await Subscription.findById(subscription._id);
     const storedPaymentHistory = await PaymentHistory.findById(paymentHistory._id);
+
+    if (!storedUser || !storedSubscription || !storedPaymentHistory) {
+      throw new Error('Verification read failed');
+    }
 
     return NextResponse.json({
       success: true,
@@ -126,7 +133,7 @@ export async function POST(req: NextRequest) {
           name: storedUser.name,
           subscriptionId: storedUser.Subscription_id,
           isActive: storedUser.isActive,
-          isNewUser: storedUser.createdAt === storedUser.updatedAt
+          isNewUser: true,
         },
         subscription: {
           id: storedSubscription._id,
@@ -134,7 +141,7 @@ export async function POST(req: NextRequest) {
           planName: storedSubscription.subscriptionName,
           amount: storedSubscription.amount,
           type: storedSubscription.type,
-          status: storedSubscription.status
+          status: storedSubscription.status,
         },
         paymentHistory: {
           id: storedPaymentHistory._id,
@@ -142,9 +149,9 @@ export async function POST(req: NextRequest) {
           planName: storedPaymentHistory.planName,
           amount: storedPaymentHistory.amount,
           status: storedPaymentHistory.status,
-          isNewUser: storedPaymentHistory.metadata.newUser
-        }
-      }
+          isNewUser: (storedPaymentHistory.metadata as { newUser?: boolean })?.newUser,
+        },
+      },
     });
 
   } catch (error) {

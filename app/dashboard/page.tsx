@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 import Sidebar from '../components/Sidebar';
 import Footer from '../components/Footer';
 
@@ -440,7 +439,6 @@ export default function Dashboard() {
         {/* Footer positioned after main content */}
         <Footer />
       </div>
-      <ToastContainer />
     </div>
   );
 }

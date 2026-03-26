@@ -70,7 +70,7 @@ export const HeroParallax = ({
   return (
     <div
       ref={ref}
-      className="h-[140vh] py-16 overflow-hidden antialiased relative flex flex-col self-auto [perspective:1200px] [transform-style:preserve-3d]"
+      className="h-[130vh] sm:h-[135vh] lg:h-[140vh] py-10 sm:py-12 lg:py-16 overflow-hidden antialiased relative flex flex-col self-auto [perspective:1200px] [transform-style:preserve-3d]"
       style={{
         willChange: 'transform',
         backfaceVisibility: 'hidden',
@@ -88,7 +88,7 @@ export const HeroParallax = ({
         }}
         className="transform-gpu"
       >
-        <motion.div className="flex flex-row-reverse space-x-reverse space-x-16 mb-6 will-change-transform">
+        <motion.div className="mb-4 flex flex-row-reverse space-x-reverse space-x-6 sm:mb-6 sm:space-x-10 lg:space-x-16 will-change-transform">
           {firstRow.map((product) => (
             <ProductCard
               product={product}
@@ -97,7 +97,7 @@ export const HeroParallax = ({
             />
           ))}
         </motion.div>
-        <motion.div className="flex flex-row mb-6 space-x-16 will-change-transform">
+        <motion.div className="mb-4 flex flex-row space-x-6 sm:mb-6 sm:space-x-10 lg:space-x-16 will-change-transform">
           {secondRow.map((product) => (
             <ProductCard
               product={product}
@@ -106,7 +106,7 @@ export const HeroParallax = ({
             />
           ))}
         </motion.div>
-        <motion.div className="flex flex-row-reverse space-x-reverse space-x-16 will-change-transform">
+        <motion.div className="flex flex-row-reverse space-x-reverse space-x-6 sm:space-x-10 lg:space-x-16 will-change-transform">
           {thirdRow.map((product) => (
             <ProductCard
               product={product}
@@ -133,9 +133,9 @@ export const Header = () => {
   }, []);
 
   return (
-    <div className="bg-white/20 backdrop-blur-sm max-w-7xl relative mx-auto py-8 px-2 w-full left-0 top-0 z-10">
+    <div className="relative left-0 top-0 z-10 mx-auto w-full max-w-7xl bg-white/20 px-4 py-6 backdrop-blur-sm sm:px-6 sm:py-8">
       <div className="text-center">
-        <h1 className="audiowide-regular text-4xl md:text-6xl lg:text-8xl font-bold ">
+        <h1 className="audiowide-regular text-3xl sm:text-4xl md:text-6xl lg:text-8xl font-bold">
           <span className="text-gray-900 block">Create Magical</span>
           <span 
             className="audiowide-regular pb-2 bg-gradient-to-r from-[#1d1f89] to-[#46adb6] bg-clip-text text-transparent block overflow-hidden"
@@ -156,14 +156,14 @@ export const Header = () => {
             />
           </span>
         </h1>
-        <p className="max-w-4xl mx-auto text-xl md:text-2xl  text-gray-700 font-medium leading-relaxed mb-8">
+        <p className="mx-auto mb-8 max-w-4xl px-1 text-base font-medium leading-relaxed text-gray-700 sm:text-lg md:text-2xl">
           Transform your marketing with 100+ AI-powered tools that generate high-converting content across all channels - 
           from blog posts to email campaigns, save you 10+ hours per week, and boost your conversions by 40%.
         </p>
         
         {/* Enhanced Content Section */}
-        <div className="max-w-5xl mx-auto mt-12 space-y-8">
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
+        <div className="mx-auto mt-10 max-w-5xl space-y-8 sm:mt-12">
+          <div className="mb-10 grid grid-cols-1 gap-4 sm:gap-6 md:mb-12 md:grid-cols-3 md:gap-8">
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-bold text-blue-600 mb-2">100+</div>
               <div className="text-gray-600 font-medium">AI-Powered Tools</div>
@@ -179,10 +179,10 @@ export const Header = () => {
           </div>
           
           {/* Get Started Button */}
-          <div className="text-center mt-12">
+          <div className="mt-10 text-center sm:mt-12">
             <a 
               href="/register" 
-              className="inline-flex items-center gap-3 px-8 py-4 text-lg font-semibold text-white rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-lg transform"
+              className="inline-flex items-center gap-2 sm:gap-3 rounded-2xl px-6 py-3 text-base font-semibold text-white transition-all duration-300 hover:scale-105 hover:shadow-lg sm:px-8 sm:py-4 sm:text-lg transform"
               style={{
                 background: 'linear-gradient(135deg, #1d1f89 0%, #46adb6 100%)',
               }}
@@ -193,7 +193,7 @@ export const Header = () => {
           </div>
 
           {/* Trust Indicators */}
-          <div className={`flex flex-col sm:flex-row items-center justify-center gap-8 text-sm text-gray-500 transform transition-all duration-1000 delay-800`}>
+          <div className="transform delay-800 flex flex-col items-center justify-center gap-4 text-xs text-gray-500 transition-all duration-1000 sm:flex-row sm:gap-8 sm:text-sm">
             <div className="flex items-center">
               <i className="fas fa-check-circle text-green-500 mr-2"></i>
               No credit card required
@@ -230,15 +230,15 @@ export const ProductCard = ({
         backfaceVisibility: 'hidden',
       }}
       key={product.title}
-      className="group/product w-[30rem] relative shrink-0 transform-gpu"
+      className="group/product relative w-[18rem] shrink-0 transform-gpu sm:w-[22rem] md:w-[26rem] lg:w-[30rem]"
     >
       <div className="block">
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm w-full p-8 flex flex-col items-center justify-center text-center transition-transform duration-300 hover:scale-[1.02]">
-          <div className={`w-20 h-20 ${product.bgColor} rounded-2xl flex items-center justify-center mb-6 transition-transform duration-300 group-hover/product:scale-110`}>
-            <i className={`${product.icon} ${product.color} text-3xl`}></i>
+        <div className="flex w-full flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-5 text-center shadow-sm transition-transform duration-300 hover:scale-[1.02] sm:p-6 md:p-7 lg:p-8">
+          <div className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl ${product.bgColor} transition-transform duration-300 group-hover/product:scale-110 sm:mb-5 sm:h-16 sm:w-16 lg:mb-6 lg:h-20 lg:w-20`}>
+            <i className={`${product.icon} ${product.color} text-xl sm:text-2xl lg:text-3xl`}></i>
           </div>
-          <h3 className="font-bold text-gray-800 mb-4 text-xl">{product.title}</h3>
-          <p className="text-sm text-gray-600 leading-relaxed">{product.description}</p>
+          <h3 className="mb-3 text-base font-bold text-gray-800 sm:mb-4 sm:text-lg lg:text-xl">{product.title}</h3>
+          <p className="text-xs leading-relaxed text-gray-600 sm:text-sm">{product.description}</p>
         </div>
       </div>
     </motion.div>

@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       query.toolName = toolName;
     }
 
-    const history = await ToolHistory.find(query).sort({ generatedDate: -1 });
+    const history = await ToolHistory.find(query, { sort: { generatedDate: -1 } });
 
     return NextResponse.json({
       success: true,

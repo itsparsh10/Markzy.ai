@@ -23,10 +23,6 @@ export default function Header() {
       link: "tools",
     },
     {
-      name: "Team", 
-      link: "team",
-    },
-    {
       name: "Pricing",
       link: "pricing",
     },
@@ -61,10 +57,19 @@ export default function Header() {
         <MobileNav>
           <MobileNavHeader>
             <NavbarLogo />
-            <MobileNavToggle
-              isOpen={isMobileMenuOpen}
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            />
+            <div className="flex items-center gap-2">
+              <NavbarButton
+                variant="gradient"
+                href="/register"
+                className="px-3 py-1.5 text-xs"
+              >
+                Start Free
+              </NavbarButton>
+              <MobileNavToggle
+                isOpen={isMobileMenuOpen}
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              />
+            </div>
           </MobileNavHeader>
 
           <MobileNavMenu
@@ -78,7 +83,7 @@ export default function Header() {
                   smoothScrollTo(item.link);
                   setIsMobileMenuOpen(false);
                 }}
-                className="relative text-neutral-600 dark:text-neutral-300 text-left w-full text-base"
+                className="relative w-full rounded-md px-2 py-2.5 text-left text-base font-medium text-gray-800 transition-colors hover:bg-slate-100"
               >
                 <span className="block">{item.name}</span>
               </button>
@@ -86,8 +91,8 @@ export default function Header() {
             <div className="flex w-full flex-col gap-4">
               <NavbarButton
                 onClick={() => setIsMobileMenuOpen(false)}
-                variant="secondary"
-                className="w-full"
+                variant="primary"
+                className="w-full border border-blue-200"
                 href="/login"
               >
                 Sign In

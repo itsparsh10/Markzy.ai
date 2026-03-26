@@ -230,7 +230,7 @@ export default function AIToolsShowcase() {
     >
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
-        <div className="text-center mb-16">
+        <div className="mb-12 text-center sm:mb-16">
           <h2 className="audiowide-regular text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
             100+ AI Tools at
             <span 
@@ -245,31 +245,31 @@ export default function AIToolsShowcase() {
               Your Fingertips
             </span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="mx-auto max-w-3xl text-base text-gray-600 sm:text-lg md:text-xl">
             From social media posts to comprehensive marketing strategies, we&apos;ve got every tool you need across {aiTools.length} specialized categories
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
           {/* Category Tabs - Scrollable */}
           <div className="lg:col-span-1">
-            <div className="h-96 lg:h-[600px] overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400 smooth-scroll">
+            <div className="h-[340px] overflow-y-auto space-y-2 pr-1 sm:h-96 sm:pr-2 lg:h-[600px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400 smooth-scroll">
               {aiTools.map((category, index) => (
                 <button
                   key={index}
                   onClick={() => setActiveCategory(index)}
-                  className={`w-full text-left p-6 rounded-xl transition-all duration-300 border-2 ${
+                  className={`w-full rounded-xl border-2 p-4 text-left transition-all duration-300 sm:p-5 lg:p-6 ${
                     activeCategory === index
                       ? `${colorClasses[category.color as keyof typeof colorClasses].bgLight} ${colorClasses[category.color as keyof typeof colorClasses].border} shadow-md`
                       : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'
                   }`}
                 >
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-12 h-12 bg-gradient-to-r ${colorClasses[category.color as keyof typeof colorClasses].bg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    <div className={`h-10 w-10 flex-shrink-0 rounded-xl bg-gradient-to-r ${colorClasses[category.color as keyof typeof colorClasses].bg} flex items-center justify-center sm:h-12 sm:w-12`}>
                       <i className={`${category.icon} text-white text-xl`}></i>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className={`font-semibold text-lg truncate ${
+                      <h3 className={`truncate text-base font-semibold sm:text-lg ${
                         activeCategory === index 
                           ? colorClasses[category.color as keyof typeof colorClasses].text 
                           : 'text-gray-800'
@@ -296,22 +296,22 @@ export default function AIToolsShowcase() {
 
           {/* Tools Grid */}
           <div className="lg:col-span-2">
-            <div className="h-96 lg:h-[600px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400 smooth-scroll">
+            <div className="h-[420px] overflow-y-auto pr-1 sm:h-[520px] sm:pr-2 lg:h-[600px] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 hover:scrollbar-thumb-gray-400 smooth-scroll">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4">
                 {aiTools[activeCategory].tools.map((tool, index) => (
                   <div
                     key={index}
-                    className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md tool-card-hover border border-gray-100 hover:border-gray-200 group"
+                    className="tool-card-hover group rounded-xl border border-gray-100 bg-white p-4 shadow-sm hover:border-gray-200 hover:shadow-md sm:p-5 lg:p-6"
                   >
-                    <div className="flex items-start space-x-4">
-                      <div className={`w-10 h-10 ${colorClasses[aiTools[activeCategory].color as keyof typeof colorClasses].bgLight} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300 flex-shrink-0`}>
+                    <div className="flex items-start space-x-3 sm:space-x-4">
+                      <div className={`h-9 w-9 flex-shrink-0 rounded-lg ${colorClasses[aiTools[activeCategory].color as keyof typeof colorClasses].bgLight} flex items-center justify-center transition-transform duration-300 group-hover:scale-110 sm:h-10 sm:w-10`}>
                         <i className={`fas fa-wand-magic-sparkles ${colorClasses[aiTools[activeCategory].color as keyof typeof colorClasses].text} text-sm`}></i>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                        <h4 className="mb-2 text-sm font-semibold text-gray-900 transition-colors group-hover:text-blue-600 sm:text-base">
                           {tool.name}
                         </h4>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-xs text-gray-600 sm:text-sm">
                           {tool.description}
                         </p>
                       </div>
@@ -321,9 +321,9 @@ export default function AIToolsShowcase() {
               </div>
 
               {/* CTA - Now inside scrollable area */}
-              <div className="mt-4 p-6 bg-white rounded-xl shadow-sm border border-gray-100 sticky bottom-0">
+              <div className="sticky bottom-0 mt-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
                 <div className="text-center">
-                  <h4 className="font-semibold text-gray-900 mb-2">Ready to explore all tools?</h4>
+                  <h4 className="mb-2 text-base font-semibold text-gray-900 sm:text-lg">Ready to explore all tools?</h4>
                   <p className="text-gray-600 text-sm mb-4">Get instant access to our complete toolkit</p>
                   <a 
                     href="/login"

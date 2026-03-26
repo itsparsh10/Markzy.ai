@@ -44,7 +44,10 @@ export async function GET(request: NextRequest) {
     const paymentHistoryCount = await PaymentHistory.countDocuments({ userId: userId });
     
     // Get latest payment
-    const latestPayment = await PaymentHistory.findOne({ userId: userId }).sort({ createdDate: -1 });
+    const latestPayment = await PaymentHistory.findOne(
+      { userId: userId },
+      { sort: { createdDate: -1 } }
+    );
 
     return NextResponse.json({
       success: true,
@@ -53,7 +56,7 @@ export async function GET(request: NextRequest) {
         userEmail: user.email,
         userName: user.name,
         userCreatedAt: user.createdAt,
-        userUpdatedAt: user.updatedAt,
+        userUpdatedAt: (user as { updatedAt?: Date }).updatedAt,
         paymentHistoryCount: paymentHistoryCount,
         latestPayment: latestPayment ? {
           id: latestPayment._id,

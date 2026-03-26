@@ -5,6 +5,7 @@ const User = require('../../../services/models/User.js');
 const Subscription = require('../../../services/models/Subscription.js');
 const PaymentHistory = require('../../../services/models/PaymentHistory.js');
 const dbConnect = require('../../../services/db.js');
+const { getSupabase } = require('../../../services/supabaseClient.js');
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,20 +32,15 @@ export async function POST(request: NextRequest) {
     console.log('✅ Test user created:', testUser._id);
     
     // Create a test subscription
-    const testSubscription = new Subscription({
+    const testSubscription = await Subscription.create({
       subscriptionId: `test_sub_${Date.now()}`,
       userId: testUser._id,
-      details: JSON.stringify({
-        planName: 'Test Plan',
-        planId: 'test-plan',
-        amount: 29.99,
-        customerEmail: testEmail
-      }),
+      details: `Test Plan - test`,
       createdDate: new Date(),
       amount: 29.99,
       numberOfUsers: 1,
       subscriptionName: 'Test Plan',
-      duration: 30, // Number of days
+      duration: 30,
       type: 'monthly',
       status: 'active',
       expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
@@ -55,8 +51,6 @@ export async function POST(request: NextRequest) {
         testPayment: true
       }
     });
-    
-    await testSubscription.save();
     console.log('✅ Test subscription created:', testSubscription._id);
     
     // Create payment history record
@@ -104,7 +98,10 @@ export async function POST(request: NextRequest) {
     });
     
     // Get payment history for the user
-    const userPaymentHistory = await PaymentHistory.find({ userId: testUser._id }).sort({ createdDate: -1 });
+    const userPaymentHistory = await PaymentHistory.find(
+      { userId: testUser._id },
+      { sort: { createdDate: -1 } }
+    );
     
     console.log('✅ Verification complete - All data stored successfully');
     
@@ -166,16 +163,16 @@ export async function DELETE(request: NextRequest) {
     console.log('🧹 Cleaning up test payment data...');
     
     // Clean up test data created by this endpoint
-    const testUsers = await User.find({ email: { $regex: /^test_.*@example\.com$/ } });
-    const testSubscriptions = await Subscription.find({ metadata: { testPayment: true } });
-    const testPaymentHistory = await PaymentHistory.find({ 'metadata.testPayment': true });
-    
-    console.log(`Found ${testUsers.length} test users, ${testSubscriptions.length} test subscriptions, ${testPaymentHistory.length} test payments`);
-    
-    // Delete test data
-    await User.deleteMany({ email: { $regex: /^test_.*@example\.com$/ } });
-    await Subscription.deleteMany({ metadata: { testPayment: true } });
-    await PaymentHistory.deleteMany({ 'metadata.testPayment': true });
+    const sb = getSupabase();
+    const { data: testUsers } = await sb.from('users').select('id').like('email', 'test_%@example.com');
+    const { data: testSubscriptions } = await sb.from('subscriptions').select('id').contains('metadata', { testPayment: true });
+    const { data: testPaymentHistory } = await sb.from('payment_histories').select('id').contains('metadata', { testPayment: true });
+
+    console.log(`Found ${(testUsers || []).length} test users, ${(testSubscriptions || []).length} test subscriptions, ${(testPaymentHistory || []).length} test payments`);
+
+    await sb.from('payment_histories').delete().contains('metadata', { testPayment: true });
+    await sb.from('subscriptions').delete().contains('metadata', { testPayment: true });
+    await sb.from('users').delete().like('email', 'test_%@example.com');
     
     console.log('✅ Test data cleanup completed');
     
