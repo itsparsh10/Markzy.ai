@@ -10,7 +10,7 @@
 [![React](https://img.shields.io/badge/React-18.2.0-blue?style=for-the-badge&logo=react)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3.3-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4.0-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![MongoDB](https://img.shields.io/badge/MongoDB-6.17.0-green?style=for-the-badge&logo=mongodb)](https://www.mongodb.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
 [![Stripe](https://img.shields.io/badge/Stripe-18.3.0-635BFF?style=for-the-badge&logo=stripe)](https://stripe.com/)
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-46adb6?style=for-the-badge&logo=vercel)](https://markzy.vercel.app)
@@ -49,10 +49,10 @@
 
 ### Backend
 - **Runtime**: Node.js with Next.js API Routes
-- **Database**: MongoDB 6.17.0 with Mongoose ODM
+- **Database**: Supabase (PostgreSQL + Auth + RLS)
 - **Authentication**: JWT with bcryptjs
 - **Payment Processing**: Stripe 18.3.0
-- **File Storage**: MongoDB GridFS
+- **Storage**: Supabase Storage (optional)
 
 ### AI & Services
 - **AI Integration**: Custom AI service endpoints
@@ -73,7 +73,7 @@
 ### Prerequisites
 
 - Node.js 18.0 or higher
-- MongoDB database
+- Supabase project
 - Stripe account (for payments)
 - Git
 
@@ -97,24 +97,37 @@
    
    Configure your environment variables:
    ```env
-   MONGODB_URI=your_mongodb_connection_string
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+   # Optional: server-only secret (never expose in frontend)
+   SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
+   # Optional: true only if you intentionally use service role from server code
+   SUPABASE_USE_SERVICE_ROLE=false
+
    JWT_SECRET=your_jwt_secret_key
    STRIPE_SECRET_KEY=your_stripe_secret_key
    STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-   NEXT_PUBLIC_API_URL=your_api_base_url
+   STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+   NEXT_PUBLIC_API_BASE_URL=your_api_base_url
    ```
 
 4. **Database Setup**
    ```bash
    npm run db:init
    ```
+   Then run `supabase/migrations/001_initial_schema.sql` in the Supabase SQL Editor.
 
-5. **Start Development Server**
+5. **Verify Supabase connection (optional but recommended)**
+   ```bash
+   npm run db:test-simple
+   ```
+
+6. **Start Development Server**
    ```bash
    npm run dev
    ```
 
-6. **Open your browser**
+7. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
 ---
@@ -279,9 +292,55 @@ GET  /api/admin/payments    # Payment analytics
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
-1. Connect your GitHub repository to Vercel
-2. Configure environment variables
-3. Deploy automatically on push to main branch
+1. Push your code to GitHub:
+   ```bash
+   git add .
+   git commit -m "Prepare production deployment"
+   git push
+   ```
+2. Go to [Vercel](https://vercel.com) -> **Add New** -> **Project**.
+3. Import your GitHub repository.
+4. In Vercel project setup, open **Environment Variables** and add all keys from the `.env.local` section above.
+5. Click **Deploy**.
+6. After deployment, go to **Project Settings -> Environment Variables** to update keys anytime.
+7. Every time you push to `main`, Vercel auto-deploys.
+
+### Supabase + Vercel Connection (Step-by-Step)
+1. Create a Supabase project at [supabase.com](https://supabase.com).
+2. In Supabase dashboard, go to **Project Settings -> API**.
+3. Copy and map values:
+   - **Project URL** -> `NEXT_PUBLIC_SUPABASE_URL`
+   - **anon/public key** -> `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - **service_role key** -> `SUPABASE_SERVICE_ROLE_KEY` (server only, optional)
+4. Go to **SQL Editor** in Supabase and run `supabase/migrations/001_initial_schema.sql`.
+5. Add the same env keys inside Vercel (**Project Settings -> Environment Variables**) for:
+   - Production
+   - Preview
+   - Development (optional)
+6. Redeploy from Vercel after adding/updating env vars.
+
+### Where to put each ENV variable
+- **Local development**: `Markzy.ai/.env.local`
+- **Production/Preview deployment**: Vercel -> Project -> Settings -> Environment Variables
+- **Never expose in client-side code**:
+  - `JWT_SECRET`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `STRIPE_SECRET_KEY`
+  - `STRIPE_WEBHOOK_SECRET`
+- **Safe for client (public)**:
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - `NEXT_PUBLIC_API_BASE_URL`
+
+### Git setup commands (if this is a fresh repo)
+```bash
+git init
+git add .
+git commit -m "Initial commit"
+git branch -M main
+git remote add origin https://github.com/<your-username>/<your-repo>.git
+git push -u origin main
+```
 
 ### Docker
 ```bash
@@ -381,7 +440,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **OpenAI** for GPT models powering our AI tools
 - **Vercel** for hosting and deployment platform
-- **MongoDB** for database services
+- **Supabase** for database and backend services
 - **Stripe** for payment processing
 - **Tailwind CSS** for the amazing styling framework
 - **Next.js Team** for the incredible React framework
